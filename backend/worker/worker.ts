@@ -1,9 +1,7 @@
 import { pop } from '../queue/queue';
 import { updateDeploymentStatus } from '../models/deploymentModel';
 
-// Background worker process
-// Simulated build execution
-async function processJobs(): Promise<void> {
+async function processJobs(){
     while (true) {
         const job = pop();
         if (job) {
@@ -12,7 +10,6 @@ async function processJobs(): Promise<void> {
             // Update status to building
             updateDeploymentStatus(job.id, 'building');
             
-            // Simulate build process taking 5 seconds
             await new Promise((resolve) => setTimeout(resolve, 5000));
             
             // Simulate random success/failure with 80% success rate
