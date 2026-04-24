@@ -9,11 +9,11 @@ const execPromise = util.promisify(exec);
 
 async function processJobs() {
   while (true) {
-    const job = pop();
+    const job = await pop();
     if (job) {
       console.log(`[Worker] Started processing deployment: ${job.id}`);
 
-      updateDeploymentStatus(job.id, "building");
+      await updateDeploymentStatus(job.id, "building");
 
         const projectTmpDir = path.join(process.cwd(), "tmp");
         const tmpDir = path.join(projectTmpDir, job.id);
@@ -58,7 +58,7 @@ async function processJobs() {
             );
 
             if (fs.existsSync(tmpDir)) {
-              updateDeploymentStatus(job.id, "success");
+              await updateDeploymentStatus(job.id, "success");
               console.log(
                 `[Worker] Deployment ${job.id} completed successfully. Output at ${tmpDir}`,
               );
@@ -70,7 +70,7 @@ async function processJobs() {
             await execPromise(`docker rm -f ${containerName}`).catch(() => {});
           }
         } catch (error) {
-          updateDeploymentStatus(job.id, "failed");
+          await updateDeploymentStatus(job.id, "failed");
           console.error(`[Worker] Deployment ${job.id} failed:`, error);
         }
     } else {

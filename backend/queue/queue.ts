@@ -1,11 +1,13 @@
-import { Deployment } from '../models/deploymentModel';
+import { prisma } from '../lib/prisma';
 
-const queue: Deployment[] = [];
-
-export function push(job: Deployment): void {
-    queue.push(job);
-}
-
-export function pop(): Deployment | undefined {
-    return queue.shift();
+export async function pop() {
+    const job = await prisma.deployment.findFirst({
+        where: { status: 'queued' },
+        orderBy: { createdAt: 'asc' }
+    });
+    
+    if (job) {
+        return job; 
+    }
+    return undefined;
 }

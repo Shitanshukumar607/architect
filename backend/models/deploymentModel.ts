@@ -1,3 +1,5 @@
+import { prisma } from "../lib/prisma";
+
 export type DeploymentStatus = 'queued' | 'building' | 'success' | 'failed';
 
 export interface Deployment {
@@ -5,32 +7,30 @@ export interface Deployment {
     repoUrl: string;
     buildCommand: string;
     outputDir: string;
-    status: DeploymentStatus;
+    status: string;
 }
 
-const deployments = new Map<string, Deployment>();
-
-export function createDeployment(id: string, repoUrl: string, buildCommand: string, outputDir: string): Deployment {
-    const deployment: Deployment = {
-        id,
-        repoUrl,
-        buildCommand,
-        outputDir,
-        status: 'queued'
-    };
-    deployments.set(id, deployment);
-    return deployment;
+export async function createDeployment(id: string, repoUrl: string, buildCommand: string, outputDir: string) {
+    return await prisma.deployment.create({
+        data: {
+            id,
+            repoUrl,
+            buildCommand,
+            outputDir,
+            status: 'queued'
+        }
+    });
 }
 
-export function getDeployment(id: string): Deployment | undefined {
-    return deployments.get(id);
+export async function getDeployment(id: string) {
+    return await prisma.deployment.findUnique({
+        where: { id }
+    });
 }
 
-export function updateDeploymentStatus(id: string, status: DeploymentStatus): Deployment | null {
-    const deployment = deployments.get(id);
-    if (deployment) {
-        deployment.status = status;
-        return deployment;
-    }
-    return null;
+export async function updateDeploymentStatus(id: string, status: DeploymentStatus) {
+    return await prisma.deployment.update({
+        where: { id },
+        data: { status }
+    });
 }

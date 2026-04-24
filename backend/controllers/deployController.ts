@@ -1,11 +1,10 @@
 import { Request, Response } from "express";
 import { createDeployment, getDeployment } from "../models/deploymentModel";
-import { push as pushToQueue } from "../queue/queue";
 import { generateId } from "../utils/generateId";
 
 const GIT_URL_REGEX = /^(https?:\/\/|git@).+/;
 
-export function createDeploymentController(req: Request, res: Response) {
+export async function createDeploymentController(req: Request, res: Response) {
   try {
     const { repoUrl, buildCommand, outputDir } = req.body;
 
@@ -30,14 +29,12 @@ export function createDeploymentController(req: Request, res: Response) {
 
     const id = generateId();
 
-    const deployment = createDeployment(
+    const deployment = await createDeployment(
       id,
       repoUrl,
       (buildCommand as string) || "npm run build",
       (outputDir as string) || "dist",
     );
-
-    pushToQueue(deployment);
 
     return res.status(201).json({
       message: "Deployment queued successfully",
@@ -49,14 +46,14 @@ export function createDeploymentController(req: Request, res: Response) {
   }
 }
 
-export function getDeploymentController(req: Request, res: Response) {
+export async function getDeploymentController(req: Request, res: Response) {
   try {
     const { id } = req.params as { id: string };
     if (!id) {
       return res.status(400).json({ error: "Deployment ID is required" });
     }
 
-    const deployment = getDeployment(id);
+    const deployment = await getDeployment(id);
     if (!deployment) {
       return res.status(404).json({ error: "Deployment not found" });
     }
