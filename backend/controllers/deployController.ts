@@ -8,6 +8,12 @@ export async function createDeploymentController(req: Request, res: Response) {
   try {
     const { repoUrl, buildCommand, outputDir } = req.body;
 
+    const session = (req as any).session;
+    const userId = session?.user?.id as string | undefined;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized. Please sign in." });
+    }
+
     if (!repoUrl) {
       return res.status(400).json({ error: "repoUrl is required" });
     }
@@ -29,12 +35,25 @@ export async function createDeploymentController(req: Request, res: Response) {
 
     const id = generateId();
 
-    const deployment = await createDeployment(
+    const normalizedBuildCommand =
+      typeof buildCommand === "string" && buildCommand.trim().length > 0
+        ? buildCommand.trim()
+        : null;
+
+    const normalizedOutputDir =
+      typeof outputDir === "string" && outputDir.trim().length > 0
+        ? outputDir.trim()
+        : normalizedBuildCommand
+          ? "dist"
+          : ".";
+
+    const deployment = await createDeployment({
       id,
+      userId,
       repoUrl,
-      (buildCommand as string) || "npm run build",
-      (outputDir as string) || "dist",
-    );
+      buildCommand: normalizedBuildCommand,
+      outputDir: normalizedOutputDir,
+    });
 
     return res.status(201).json({
       message: "Deployment queued successfully",
@@ -53,7 +72,13 @@ export async function getDeploymentController(req: Request, res: Response) {
       return res.status(400).json({ error: "Deployment ID is required" });
     }
 
-    const deployment = await getDeployment(id);
+    const session = (req as any).session;
+    const userId = session?.user?.id as string | undefined;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized. Please sign in." });
+    }
+
+    const deployment = await getDeployment(id, userId);
     if (!deployment) {
       return res.status(404).json({ error: "Deployment not found" });
     }
