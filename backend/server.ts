@@ -4,8 +4,8 @@ import express from "express";
 import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
-import deployRoutes from "./routes/deploy";
-import projectRoutes from "./routes/projects";
+import deployRoutes from "./routes/deploy.route";
+import projectRoutes from "./routes/projects.route";
 import { startWorker } from "./worker/worker";
 
 const app = express();

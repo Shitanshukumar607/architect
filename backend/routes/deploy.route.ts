@@ -2,7 +2,7 @@ import express from "express";
 import {
   createDeploymentController,
   getDeploymentController,
-} from "../controllers/deployController";
+} from "../controllers/deploy.controller";
 import { requireAuth } from "../middleware/authMiddleware";
 
 const router = express.Router();

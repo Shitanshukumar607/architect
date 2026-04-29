@@ -2,7 +2,7 @@ import express from "express";
 import {
   createProjectController,
   getProjectsController,
-} from "../controllers/projectController";
+} from "../controllers/project.controller";
 import { requireAuth } from "../middleware/authMiddleware";
 
 const router = express.Router();
