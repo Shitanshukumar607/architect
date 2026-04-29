@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1038.0",
     "@better-auth/prisma-adapter": "^1.6.5",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.5.0",
@@ -20,12 +21,16 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "install": "^0.13.0",
+    "mime-types": "^3.0.2",
+    "npm": "^11.13.0",
     "pg": "^8.20.0",
     "prisma": "^7.5.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/mime-types": "^3.0.1",
     "@types/node": "^25.6.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

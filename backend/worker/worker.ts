@@ -5,6 +5,8 @@ import { exec } from "child_process";
 import util from "util";
 import path from "path";
 import fs from "fs";
+import { uploadDirectoryToS3 } from "../utils/uploadToS3";
+import { rewriteHtmlPaths } from "../utils/rewritePaths";
 
 const execPromise = util.promisify(exec);
 
@@ -71,11 +73,17 @@ async function processJobs() {
           );
 
           if (fs.existsSync(tmpDir)) {
+            console.log(`[Worker] Rewriting absolute paths in HTML`);
+            rewriteHtmlPaths(tmpDir, job.id);
+
+            console.log(`[Worker] Uploading files to S3`);
+            await uploadDirectoryToS3(tmpDir, `deployments/${job.id}`);
+
             await updateDeploymentStatus(job.id, DeploymentStatus.SUCCESS, {
               finishedAt: new Date(),
             });
             console.log(
-              `[Worker] Deployment ${job.id} completed successfully. Output at ${tmpDir}`,
+              `[Worker] Deployment ${job.id} completed successfully. Uploaded to S3 at deployments/${job.id}`,
             );
           } else {
             throw new Error(`Output directory ${job.outputDir} not found`);
