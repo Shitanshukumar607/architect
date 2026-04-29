@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { DeploymentStatus } from "@prisma/client";
+import { generateId } from "../utils/generateId";
 
 export async function createProjectController(req: Request, res: Response) {
   try {
@@ -18,6 +20,18 @@ export async function createProjectController(req: Request, res: Response) {
         buildCommand: buildCommand || "npm run build",
         outputDir: outputDir || "dist",
         userId: session.user.id,
+      },
+    });
+
+    await prisma.deployment.create({
+      data: {
+        id: generateId(),
+        userId: session.user.id,
+        projectId: project.id,
+        repoUrl: project.repoUrl,
+        buildCommand: project.buildCommand,
+        outputDir: project.outputDir,
+        status: DeploymentStatus.QUEUED,
       },
     });
 
