@@ -15,7 +15,7 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
-  })
+  }),
 );
 
 // BetterAuth handler MUST be mounted BEFORE express.json()
@@ -25,6 +25,10 @@ app.use(express.json());
 
 app.use("/deploy", deployRoutes);
 app.use("/api/projects", projectRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
