@@ -30,6 +30,23 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
+app.get("/resolve", async (req, res) => {
+  const host = req.headers.host;
+  // const subdomain = host!.split(".")[0];
+
+  // const record = await db.get(subdomain);
+  const record = "test";
+
+  if (!record) {
+    return res.status(404).send("Not found");
+  }
+
+  return res.redirect(
+    // `https://architect-by-shitanshu.s3.amazonaws.com/${record}/index.html`
+    `https://${process.env.S3_BUCKET}.s3.eu-north-1.amazonaws.com/deployments/${record}/index.html`,
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 
