@@ -33,7 +33,7 @@ app.get("/health", (req, res) => {
 
 // Catch-all handler for serving deployed projects
 // IMPORTANT: This must be at the VERY END after all API routes
-app.get("/:path(*)", deploymentHandlerController);
+app.get(/.*/, deploymentHandlerController);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
