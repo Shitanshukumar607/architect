@@ -23,14 +23,14 @@ export async function deploymentHandlerController(
   res: Response,
 ): Promise<void> {
   try {
-    // const host = req.headers.host;
+    const host = req.headers.host;
 
-    // if (!host) {
-    //   res.status(400).send("No host header");
-    //   return;
-    // }
+    if (!host) {
+      res.status(400).send("No host header");
+      return;
+    }
 
-    // const subdomain = host.split(".")[0];
+    const subdomain = host.split(".")[0];
 
     // // Optional: ignore root domain
     // if (subdomain === "architect" || subdomain === "localhost") {
@@ -68,7 +68,7 @@ export async function deploymentHandlerController(
     // }
 
     // const deploymentId = deployment.id;
-    const deploymentId = "mosqj31daax0v";
+    const deploymentId = subdomain; // TODO: Add proper mapping from subdomain to deployment ID in DB instead of assuming they are the same
 
     // 3. Resolve file path
     let filePath = req.path;
