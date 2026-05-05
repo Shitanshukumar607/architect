@@ -6,6 +6,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import deployRoutes from "./routes/deploy.route";
 import projectRoutes from "./routes/projects.route";
+import { deploymentHandlerController } from "./controllers/deployment-handler.controller";
 import { startWorker } from "./worker/worker";
 
 const app = express();
@@ -30,23 +31,9 @@ app.get("/", (req, res) => {
   res.send("Server is running123!!!!!!");
 });
 
-app.get("/resolve", async (req, res) => {
-  const host = req.headers.host;
-  // const subdomain = host!.split(".")[0];
-
-  // const record = await db.get(subdomain);
-  const record = "test";
-
-  if (!record) {
-    return res.status(404).send("Not found");
-  }
-
-  return res.redirect(
-    // `https://architect-by-shitanshu.s3.amazonaws.com/${record}/index.html`
-    // `https://${process.env.S3_BUCKET}.s3.eu-north-1.amazonaws.com/deployments/${record}/index.html`,
-    "google.com"
-  );
-});
+// Catch-all handler for serving deployed projects
+// IMPORTANT: This must be at the VERY END after all API routes
+app.get("*", deploymentHandlerController);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
