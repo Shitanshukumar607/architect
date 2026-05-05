@@ -27,8 +27,8 @@ app.use(express.json());
 app.use("/deploy", deployRoutes);
 app.use("/api/projects", projectRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Server is running123!!!!!!");
+app.get("/health", (req, res) => {
+  res.send("OK");
 });
 
 // Catch-all handler for serving deployed projects
