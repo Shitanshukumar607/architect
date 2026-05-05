@@ -27,7 +27,7 @@ app.use("/deploy", deployRoutes);
 app.use("/api/projects", projectRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Server is running");
+  res.send("Server is running123!!!!!!");
 });
 
 app.get("/resolve", async (req, res) => {
@@ -43,7 +43,8 @@ app.get("/resolve", async (req, res) => {
 
   return res.redirect(
     // `https://architect-by-shitanshu.s3.amazonaws.com/${record}/index.html`
-    `https://${process.env.S3_BUCKET}.s3.eu-north-1.amazonaws.com/deployments/${record}/index.html`,
+    // `https://${process.env.S3_BUCKET}.s3.eu-north-1.amazonaws.com/deployments/${record}/index.html`,
+    "google.com"
   );
 });
 

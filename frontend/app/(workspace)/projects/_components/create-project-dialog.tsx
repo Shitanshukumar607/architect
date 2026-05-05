@@ -30,8 +30,8 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
   const [error, setError] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
-    name: "",
-    repoUrl: "",
+    name: "p1",
+    repoUrl: "https://github.com/Shitanshukumar607/frontend-test",
     framework: "VITE",
     buildCommand: "npm run build",
     outputDir: "dist",

@@ -73,8 +73,8 @@ async function processJobs() {
           );
 
           if (fs.existsSync(tmpDir)) {
-            console.log(`[Worker] Rewriting absolute paths in HTML`);
-            rewriteHtmlPaths(tmpDir, job.id);
+            // console.log(`[Worker] Rewriting absolute paths in HTML`);
+            // rewriteHtmlPaths(tmpDir, job.id);
 
             console.log(`[Worker] Uploading files to S3`);
             await uploadDirectoryToS3(tmpDir, `deployments/${job.id}`);
