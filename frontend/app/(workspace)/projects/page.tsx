@@ -2,13 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { formatDistanceToNow } from "date-fns"
 import {
   Clock,
@@ -32,6 +26,7 @@ interface Project {
   framework: string
   buildCommand: string
   outputDir: string
+  domains?: { hostname: string }[]
 }
 
 export default function ProjectsPage() {
@@ -112,83 +107,97 @@ export default function ProjectsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex w-full flex-col gap-4">
           {projects.map((project) => (
             <Card
               key={project.id}
-              className="group flex h-full cursor-pointer flex-col bg-background/50 transition-colors hover:border-primary/50"
+              className="group flex cursor-pointer flex-col justify-between bg-background/50 p-4 transition-colors hover:border-primary/50 sm:flex-row sm:items-center sm:p-5"
             >
-              <CardHeader className="flex flex-row items-start justify-between pb-4">
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xl transition-colors group-hover:text-primary">
-                      {project.name}
-                    </CardTitle>
-                    <Badge
-                      variant="secondary"
-                      className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-primary/20"
-                    >
-                      Production
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Globe className="h-3.5 w-3.5" />
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-xl font-bold transition-colors group-hover:text-primary">
+                    {project.name}
+                  </h3>
+                  <Badge
+                    variant="secondary"
+                    className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 transition-colors dark:text-emerald-400"
+                  >
+                    Active
+                  </Badge>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                  {project.domains && project.domains.length > 0 && (
                     <a
-                      href="#"
-                      className="transition-colors hover:text-foreground hover:underline"
+                      href={`http://${project.domains[0].hostname}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-foreground hover:underline"
                     >
-                      {project.name}.vercel.app
+                      <Globe className="h-4 w-4" />
+                      <span>{project.domains[0].hostname}</span>
                     </a>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="-mr-2 h-8 w-8 text-muted-foreground hover:text-foreground"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </CardHeader>
+                  )}
 
-              <CardContent className="mt-auto flex-1 pb-4">
-                <div className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/50 p-2 text-sm text-muted-foreground">
-                  <Image
-                    src="/github.svg"
-                    alt="GitHub"
-                    width={16}
-                    height={16}
-                    className="brightness-0 dark:invert"
-                  />
-                  <span className="truncate font-medium">
-                    {project.repoUrl
-                      ? project.repoUrl
+                  {project.repoUrl && (
+                    <a
+                      href={project.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 transition-colors hover:text-foreground hover:underline"
+                    >
+                      <Image
+                        src="/github.svg"
+                        alt="GitHub"
+                        width={14}
+                        height={14}
+                        className="brightness-0 dark:invert"
+                      />
+                      <span className="truncate font-medium">
+                        {project.repoUrl
                           .replace("https://github.com/", "")
-                          .replace("http://github.com/", "")
-                      : "No repository"}
-                  </span>
+                          .replace("http://github.com/", "")}
+                      </span>
+                    </a>
+                  )}
                 </div>
-              </CardContent>
+              </div>
 
-              <CardFooter className="flex items-center justify-between border-t border-border/50 pt-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <LayoutTemplate className="h-3.5 w-3.5" />
-                    <span className="capitalize">
+              <div className="mt-4 flex flex-row items-center justify-between gap-4 text-sm text-muted-foreground sm:mt-0 sm:ml-6 sm:flex-col sm:items-end sm:border-l sm:border-border/50 sm:pl-6">
+                <div className="flex items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-1.5" title="Framework">
+                    <LayoutTemplate className="h-4 w-4" />
+                    <span className="font-medium capitalize">
                       {project.framework || "Other"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <GitBranch className="h-3.5 w-3.5" />
-                    main
+                  <div className="flex items-center gap-1.5" title="Branch">
+                    <GitBranch className="h-4 w-4" />
+                    <span className="font-medium">main</span>
+                  </div>
+                  <div
+                    className="flex items-center gap-1.5 whitespace-nowrap"
+                    title="Deployed"
+                  >
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">
+                      {formatDistanceToNow(new Date(project.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  {formatDistanceToNow(new Date(project.createdAt), {
-                    addSuffix: true,
-                  })}
-                </div>
-              </CardFooter>
+              </div>
+
+              <div className="ml-4 hidden items-center sm:flex">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
