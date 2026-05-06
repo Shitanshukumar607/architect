@@ -1,22 +1,21 @@
+import { DeploymentStatus } from "@prisma/client";
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { DeploymentStatus } from "@prisma/client";
 import { generateId } from "../utils/generateId";
 
 export async function createProjectController(req: Request, res: Response) {
   try {
-    const { name, repoUrl, framework, buildCommand, outputDir } = req.body;
+    const { repoUrl, framework, buildCommand, outputDir } = req.body;
     const session = (req as any).session;
 
-    if (!name || !repoUrl) {
+    if (!repoUrl) {
       return res
         .status(400)
-        .json({ error: "Name and repository URL are required" });
+        .json({ error: "Repository URL is required" });
     }
 
     const project = await prisma.project.create({
       data: {
-        name,
         repoUrl,
         framework: framework || "VITE",
         buildCommand: buildCommand || "npm run build",
@@ -25,7 +24,8 @@ export async function createProjectController(req: Request, res: Response) {
       },
     });
 
-    const subdomain = `${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generateId().slice(-5)}.localhost`;
+    const repoName = repoUrl.split('/').pop()?.replace('.git', '') || 'project';
+    const subdomain = `${repoName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generateId().slice(-5)}.localhost`;
 
     await prisma.projectDomain.create({
       data: {
@@ -78,5 +78,38 @@ export async function getProjectsController(req: Request, res: Response) {
   } catch (error) {
     console.error("Get projects error:", error);
     return res.status(500).json({ error: "Failed to fetch projects" });
+  }
+}
+
+export async function getProjectByIdController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { id } = req.params;
+
+    const project = await prisma.project.findFirst({
+      where: {
+        id: id as string,
+        userId: session.user.id,
+      },
+      include: {
+        domains: true,
+        envVars: true,
+        deployments: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 10,
+        },
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    return res.status(200).json(project);
+  } catch (error) {
+    console.error("Get project error:", error);
+    return res.status(500).json({ error: "Failed to fetch project" });
   }
 }
