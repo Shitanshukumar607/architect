@@ -4,7 +4,7 @@ import fs from "fs";
 import mime from "mime-types";
 import path from "path";
 
-const s3 = new S3Client({
+export const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY,
