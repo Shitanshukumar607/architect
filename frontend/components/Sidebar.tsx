@@ -19,27 +19,43 @@ import {
 } from "@/components/ui/sidebar"
 import {
   BookOpen,
-  Gauge,
   GitBranch,
+  Globe,
   Plus,
+  Rocket,
   Settings,
   ShieldAlert,
+  ShieldCheck,
 } from "lucide-react"
 
 const navigationItems = [
-  {
-    key: "dashboard",
-    href: "/dashboard",
-    label: "Dashboard",
-    tooltip: "Dashboard",
-    icon: Gauge,
-  },
   {
     key: "projects",
     href: "/projects",
     label: "Projects",
     tooltip: "Projects",
     icon: GitBranch,
+  },
+  {
+    key: "domains",
+    href: "/domains",
+    label: "Domains",
+    tooltip: "Domains",
+    icon: Globe,
+  },
+  {
+    key: "environment-variables",
+    href: "/environment-variables",
+    label: "Environment Variables",
+    tooltip: "Environment Variables",
+    icon: ShieldCheck,
+  },
+  {
+    key: "deployments",
+    href: "/deployments",
+    label: "Deployments",
+    tooltip: "Deployments",
+    icon: Rocket,
   },
   {
     key: "settings",
@@ -105,7 +121,7 @@ function SidebarNavItem({
 export function SidebarComponent({
   activeItem,
 }: {
-  activeItem: "dashboard" | "projects" | "settings"
+  activeItem: "projects" | "domains" | "environment-variables" | "deployments" | "settings"
 }) {
   return (
     <Sidebar variant="inset" collapsible="icon">
