@@ -21,6 +21,7 @@ import { CreateProjectDialog } from "./_components/create-project-dialog"
 
 interface Project {
   id: string
+  name: string
   repoUrl: string
   createdAt: string
   framework: string
@@ -117,11 +118,10 @@ export default function ProjectsPage() {
                 <div className="flex items-center gap-3">
                   <h3 className="text-xl font-bold transition-colors group-hover:text-primary">
                     <Link
-                      href={`/projects/${project.id}`}
+                      href={`/projects/${project.name}`}
                       className="after:absolute after:inset-0"
                     >
-                      {project.repoUrl.split("/").pop()?.replace(".git", "") ||
-                        "Project"}
+                      {project.name}
                     </Link>
                   </h3>
                   <Badge

@@ -14,8 +14,12 @@ export async function createProjectController(req: Request, res: Response) {
         .json({ error: "Repository URL is required" });
     }
 
+    const repoName = repoUrl.split('/').pop()?.replace('.git', '') || 'project';
+    const projectName = req.body.name || repoName;
+
     const project = await prisma.project.create({
       data: {
+        name: projectName,
         repoUrl,
         framework: framework || "VITE",
         buildCommand: buildCommand || "npm run build",
@@ -24,8 +28,7 @@ export async function createProjectController(req: Request, res: Response) {
       },
     });
 
-    const repoName = repoUrl.split('/').pop()?.replace('.git', '') || 'project';
-    const subdomain = `${repoName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generateId().slice(-5)}.localhost`;
+    const subdomain = `${projectName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generateId().slice(-5)}.localhost`;
 
     await prisma.projectDomain.create({
       data: {
@@ -113,3 +116,37 @@ export async function getProjectByIdController(req: Request, res: Response) {
     return res.status(500).json({ error: "Failed to fetch project" });
   }
 }
+
+export async function getProjectByNameController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { name } = req.params;
+
+    const project = await prisma.project.findFirst({
+      where: {
+        name: name as string,
+        userId: session.user.id,
+      },
+      include: {
+        domains: true,
+        envVars: true,
+        deployments: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 10,
+        },
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    return res.status(200).json(project);
+  } catch (error) {
+    console.error("Get project by name error:", error);
+    return res.status(500).json({ error: "Failed to fetch project" });
+  }
+}
+

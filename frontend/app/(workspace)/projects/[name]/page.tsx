@@ -51,6 +51,7 @@ interface EnvVar {
 
 interface Project {
   id: string
+  name: string
   repoUrl: string
   createdAt: string
   framework: string
@@ -71,7 +72,7 @@ export default function ProjectPage() {
     try {
       setIsLoading(true)
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects/${params.id}`, {
+      const response = await fetch(`${baseUrl}/api/projects/name/${params.name}`, {
         credentials: "include",
       })
       if (response.ok) {
@@ -88,10 +89,10 @@ export default function ProjectPage() {
   }
 
   useEffect(() => {
-    if (params.id) {
+    if (params.name) {
       fetchProject()
     }
-  }, [params.id])
+  }, [params.name])
 
   if (isLoading) {
     return (
@@ -114,7 +115,7 @@ export default function ProjectPage() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">
-              {project.repoUrl.split('/').pop()?.replace('.git', '') || 'Project'}
+              {project.name}
             </h1>
             <Badge
               variant="secondary"

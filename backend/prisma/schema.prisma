@@ -75,6 +75,7 @@ model User {
 
 model Project {
   id           String           @id @default(cuid())
+  name         String
 
   repoUrl       String
   framework    ProjectFramework @default(VITE)
@@ -93,6 +94,7 @@ model Project {
   updatedAt    DateTime         @updatedAt
 
   @@unique([userId, repoUrl])
+  @@unique([userId, name])
   @@index([userId])
 
   @@map("project")
