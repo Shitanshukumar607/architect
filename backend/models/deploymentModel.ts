@@ -33,7 +33,6 @@ export async function createDeployment(input: CreateDeploymentInput) {
   const framework = input.buildCommand
     ? ProjectFramework.VITE
     : ProjectFramework.STATIC;
-  const projectName = inferProjectName(input.repoUrl);
 
   const project = await prisma.project.upsert({
     where: {
@@ -49,7 +48,6 @@ export async function createDeployment(input: CreateDeploymentInput) {
     },
     create: {
       userId: input.userId,
-      name: projectName,
       repoUrl: input.repoUrl,
       buildCommand: input.buildCommand,
       outputDir: input.outputDir,
