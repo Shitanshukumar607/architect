@@ -15,7 +15,8 @@ export async function createProjectController(req: Request, res: Response) {
     }
 
     const repoName = repoUrl.split('/').pop()?.replace('.git', '') || 'project';
-    const projectName = req.body.name || repoName;
+    // Always use repo name as project name and normalize it
+    const projectName = repoName.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
     const project = await prisma.project.create({
       data: {
@@ -28,11 +29,11 @@ export async function createProjectController(req: Request, res: Response) {
       },
     });
 
-    const subdomain = `${projectName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generateId().slice(-5)}.localhost`;
+    const subdomain = projectName.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + generateId().slice(-5);
 
     await prisma.projectDomain.create({
       data: {
-        hostname: subdomain,
+        hostname: subdomain + ".architect.shitanshu.me",
         projectId: project.id,
         verified: true,
       },

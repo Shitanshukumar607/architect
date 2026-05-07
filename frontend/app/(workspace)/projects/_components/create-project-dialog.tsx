@@ -30,7 +30,6 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
   const [error, setError] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
-    name: "",
     repoUrl: "https://github.com/Shitanshukumar607/frontend-test",
     framework: "VITE",
     buildCommand: "npm run build",
@@ -38,20 +37,7 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
   })
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-      
-      // If repoUrl changes and name is empty or matches old repo name, update name
-      if (field === "repoUrl") {
-        const oldRepoName = prev.repoUrl.split('/').pop()?.replace('.git', '') || '';
-        const newRepoName = value.split('/').pop()?.replace('.git', '') || '';
-        if (!prev.name || prev.name === oldRepoName) {
-          newData.name = newRepoName;
-        }
-      }
-      
-      return newData;
-    })
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,7 +65,6 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
       onOpenChange(false)
       // Reset form
       setFormData({
-        name: "",
         repoUrl: "",
         framework: "VITE",
         buildCommand: "npm run build",
@@ -110,19 +95,6 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
               </div>
             )}
             
-            <div className="grid gap-2">
-              <Label htmlFor="name">Project Name</Label>
-              <Input
-                id="name"
-                placeholder="my-awesome-project"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                This will be used in your project URL.
-              </p>
-            </div>
 
             <div className="grid gap-2">
 
