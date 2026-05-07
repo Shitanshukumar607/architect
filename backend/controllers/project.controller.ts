@@ -33,7 +33,7 @@ export async function createProjectController(req: Request, res: Response) {
 
     await prisma.projectDomain.create({
       data: {
-        hostname: subdomain + ".architect.shitanshu.me",
+        hostname: subdomain,
         projectId: project.id,
         verified: true,
       },
