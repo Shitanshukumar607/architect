@@ -72,7 +72,7 @@ export default function ProjectPage() {
     try {
       setIsLoading(true)
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects/name/${params.name}`, {
+      const response = await fetch(`${baseUrl}/api/projects/name/${params.projectName}`, {
         credentials: "include",
       })
       if (response.ok) {
@@ -89,10 +89,10 @@ export default function ProjectPage() {
   }
 
   useEffect(() => {
-    if (params.name) {
+    if (params.projectName) {
       fetchProject()
     }
-  }, [params.name])
+  }, [params.projectName])
 
   if (isLoading) {
     return (
@@ -179,10 +179,16 @@ export default function ProjectPage() {
             Overview
           </TabsTrigger>
           <TabsTrigger
-            value="deployments"
+            value="domains"
             className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pt-2 pb-3 font-medium text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none"
           >
-            Deployments
+            Domains
+          </TabsTrigger>
+          <TabsTrigger
+            value="env-vars"
+            className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pt-2 pb-3 font-medium text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Environment Variables
           </TabsTrigger>
           <TabsTrigger
             value="settings"
@@ -279,6 +285,32 @@ export default function ProjectPage() {
 
         <TabsContent value="deployments" className="mt-6">
           <ProjectDeployments project={project} onRefresh={fetchProject} />
+        </TabsContent>
+
+        <TabsContent value="domains" className="mt-6">
+           <Card className="border-dashed bg-background/50">
+            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+              <Globe className="h-8 w-8 text-primary mb-4" />
+              <h3 className="text-lg font-semibold">Manage Domains</h3>
+              <p className="text-muted-foreground mb-4">View and configure domains for this project.</p>
+              <Button asChild variant="outline">
+                <Link href={`/projects/${params.projectName}/domains`}>Go to Domains Page</Link>
+              </Button>
+            </CardContent>
+           </Card>
+        </TabsContent>
+
+        <TabsContent value="env-vars" className="mt-6">
+           <Card className="border-dashed bg-background/50">
+            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+              <Terminal className="h-8 w-8 text-primary mb-4" />
+              <h3 className="text-lg font-semibold">Environment Variables</h3>
+              <p className="text-muted-foreground mb-4">Configure variables for your application.</p>
+              <Button asChild variant="outline">
+                <Link href={`/projects/${params.projectName}/environment-variables`}>Go to Env Vars Page</Link>
+              </Button>
+            </CardContent>
+           </Card>
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">

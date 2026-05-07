@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -123,6 +124,19 @@ export function SidebarComponent({
 }: {
   activeItem: "projects" | "domains" | "environment-variables" | "deployments" | "settings"
 }) {
+  const params = useParams()
+  const projectName = params?.projectName as string | undefined
+
+  const updatedNavigationItems = navigationItems.map((item) => {
+    if (projectName && item.key !== "projects") {
+      return {
+        ...item,
+        href: `/projects/${projectName}${item.href}` as const,
+      }
+    }
+    return item
+  })
+
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
@@ -159,7 +173,7 @@ export function SidebarComponent({
           {/* <SidebarGroupLabel>Navigation</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu className="flex gap-1">
-              {navigationItems.map((item) => (
+              {updatedNavigationItems.map((item) => (
                 <SidebarNavItem
                   key={item.key}
                   item={item}

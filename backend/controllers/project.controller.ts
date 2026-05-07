@@ -151,3 +151,65 @@ export async function getProjectByNameController(req: Request, res: Response) {
   }
 }
 
+export async function addProjectDomainController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { name } = req.params;
+    const { hostname } = req.body;
+
+    const project = await prisma.project.findFirst({
+      where: {
+        name: name as string,
+        userId: session.user.id,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const domain = await prisma.projectDomain.create({
+      data: {
+        hostname,
+        projectId: project.id,
+      },
+    });
+
+    return res.status(201).json(domain);
+  } catch (error) {
+    console.error("Add domain error:", error);
+    return res.status(500).json({ error: "Failed to add domain" });
+  }
+}
+
+export async function addProjectEnvVarController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { name } = req.params;
+    const { key, value } = req.body;
+
+    const project = await prisma.project.findFirst({
+      where: {
+        name: name as string,
+        userId: session.user.id,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const envVar = await prisma.projectEnvVar.create({
+      data: {
+        key,
+        value,
+        projectId: project.id,
+      },
+    });
+
+    return res.status(201).json(envVar);
+  } catch (error) {
+    console.error("Add env var error:", error);
+    return res.status(500).json({ error: "Failed to add env var" });
+  }
+}
