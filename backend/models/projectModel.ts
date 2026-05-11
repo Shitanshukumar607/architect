@@ -22,6 +22,11 @@ type CreateProjectEnvVarInput = {
   projectId: string;
 };
 
+type UpdateProjectEnvVarInput = {
+  key?: string;
+  value?: string;
+};
+
 export async function createProject(input: CreateProjectInput) {
   return await prisma.project.create({
     data: {
@@ -103,6 +108,49 @@ export async function createProjectEnvVar(input: CreateProjectEnvVarInput) {
       key: input.key,
       value: input.value,
       projectId: input.projectId,
+    },
+  });
+}
+
+export async function listProjectEnvVarsByProjectId(projectId: string) {
+  return await prisma.projectEnvVar.findMany({
+    where: {
+      projectId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
+export async function findProjectEnvVarById(
+  projectId: string,
+  envVarId: string,
+) {
+  return await prisma.projectEnvVar.findFirst({
+    where: {
+      id: envVarId,
+      projectId,
+    },
+  });
+}
+
+export async function updateProjectEnvVarById(
+  envVarId: string,
+  data: UpdateProjectEnvVarInput,
+) {
+  return await prisma.projectEnvVar.update({
+    where: {
+      id: envVarId,
+    },
+    data,
+  });
+}
+
+export async function deleteProjectEnvVarById(envVarId: string) {
+  return await prisma.projectEnvVar.delete({
+    where: {
+      id: envVarId,
     },
   });
 }

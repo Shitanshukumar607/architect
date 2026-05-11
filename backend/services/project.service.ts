@@ -3,9 +3,13 @@ import {
   createProject,
   createProjectDomain,
   createProjectEnvVar,
+  deleteProjectEnvVarById,
+  findProjectEnvVarById,
   getProjectByIdForUser,
   getProjectByNameForUser,
+  listProjectEnvVarsByProjectId,
   listProjectsByUser,
+  updateProjectEnvVarById,
 } from "../models/projectModel";
 import { createDeploymentForProject } from "../models/deploymentModel";
 import { generateId } from "../utils/generateId";
@@ -127,11 +131,104 @@ export async function addProjectEnvVar(
   key: string,
   value: string,
 ) {
+  if (!key || typeof key !== "string") {
+    throw new ServiceError("key is required", 400);
+  }
+
+  if (!value || typeof value !== "string") {
+    throw new ServiceError("value is required", 400);
+  }
+
   const project = await getProjectByName(userId, name);
 
-  return await createProjectEnvVar({
-    key,
-    value,
-    projectId: project.id,
-  });
+  try {
+    return await createProjectEnvVar({
+      key,
+      value,
+      projectId: project.id,
+    });
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ServiceError("Environment variable key already exists", 400);
+    }
+    throw error;
+  }
+}
+
+export async function listProjectEnvVars(userId: string, name: string) {
+  const project = await getProjectByName(userId, name);
+
+  return await listProjectEnvVarsByProjectId(project.id);
+}
+
+type UpdateProjectEnvVarPayload = {
+  key?: unknown;
+  value?: unknown;
+};
+
+export async function updateProjectEnvVar(
+  userId: string,
+  name: string,
+  envVarId: string,
+  payload: UpdateProjectEnvVarPayload,
+) {
+  if (!envVarId) {
+    throw new ServiceError("Environment variable not found", 404);
+  }
+
+  const { key, value } = payload;
+  const data: { key?: string; value?: string } = {};
+
+  if (key !== undefined) {
+    if (typeof key !== "string" || key.length === 0) {
+      throw new ServiceError("key must be a non-empty string", 400);
+    }
+    data.key = key;
+  }
+
+  if (value !== undefined) {
+    if (typeof value !== "string" || value.length === 0) {
+      throw new ServiceError("value must be a non-empty string", 400);
+    }
+    data.value = value;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ServiceError("Nothing to update", 400);
+  }
+
+  const project = await getProjectByName(userId, name);
+  const envVar = await findProjectEnvVarById(project.id, envVarId);
+
+  if (!envVar) {
+    throw new ServiceError("Environment variable not found", 404);
+  }
+
+  try {
+    return await updateProjectEnvVarById(envVar.id, data);
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ServiceError("Environment variable key already exists", 400);
+    }
+    throw error;
+  }
+}
+
+export async function deleteProjectEnvVar(
+  userId: string,
+  name: string,
+  envVarId: string,
+) {
+  if (!envVarId) {
+    throw new ServiceError("Environment variable not found", 404);
+  }
+
+  const project = await getProjectByName(userId, name);
+  const envVar = await findProjectEnvVarById(project.id, envVarId);
+
+  if (!envVar) {
+    throw new ServiceError("Environment variable not found", 404);
+  }
+
+  return await deleteProjectEnvVarById(envVar.id);
 }

@@ -3,9 +3,12 @@ import {
   addProjectDomain,
   addProjectEnvVar,
   createProjectForUser,
+  deleteProjectEnvVar,
   getProjectById,
   getProjectByName,
   listProjectsForUser,
+  listProjectEnvVars,
+  updateProjectEnvVar,
 } from "../services/project.service";
 import { ServiceError } from "../services/service-error";
 
@@ -101,5 +104,72 @@ export async function addProjectEnvVarController(req: Request, res: Response) {
     }
     console.error("Add env var error:", error);
     return res.status(500).json({ error: "Failed to add env var" });
+  }
+}
+
+export async function getProjectEnvVarsController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { name } = req.params as { name: string };
+
+    const envVars = await listProjectEnvVars(session.user.id, name);
+
+    return res.status(200).json(envVars);
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Get env vars error:", error);
+    return res.status(500).json({ error: "Failed to fetch env vars" });
+  }
+}
+
+export async function updateProjectEnvVarController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const session = (req as any).session;
+    const { name, envVarId } = req.params as {
+      name: string;
+      envVarId: string;
+    };
+    const { key, value } = req.body as { key?: string; value?: string };
+
+    const envVar = await updateProjectEnvVar(session.user.id, name, envVarId, {
+      key,
+      value,
+    });
+
+    return res.status(200).json(envVar);
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Update env var error:", error);
+    return res.status(500).json({ error: "Failed to update env var" });
+  }
+}
+
+export async function deleteProjectEnvVarController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const session = (req as any).session;
+    const { name, envVarId } = req.params as {
+      name: string;
+      envVarId: string;
+    };
+
+    const envVar = await deleteProjectEnvVar(session.user.id, name, envVarId);
+
+    return res.status(200).json(envVar);
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Delete env var error:", error);
+    return res.status(500).json({ error: "Failed to delete env var" });
   }
 }

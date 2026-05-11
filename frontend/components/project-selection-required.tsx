@@ -36,7 +36,7 @@ export function ProjectSelectionRequired({
           <p className="mb-8 max-w-md text-balance text-lg text-muted-foreground">
             To view and manage {featureName.toLowerCase()}, you must first select a project from your dashboard.
           </p>
-          <Button asChild size="lg" className="gap-2 rounded-xl px-8 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <Button asChild size="lg" className="gap-2 rounded-xl px-8 shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
             <Link href="/projects">
               <LayoutGrid className="h-4 w-4" />
               Go to Projects

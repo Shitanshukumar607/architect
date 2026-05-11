@@ -127,7 +127,7 @@ export default function ProjectDomainsPage() {
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="gap-2 rounded-xl shadow-lg shadow-primary/20">
+            <Button className="gap-2 rounded-xl shadow-lg">
               <Plus className="h-4 w-4" />
               Add Domain
             </Button>
