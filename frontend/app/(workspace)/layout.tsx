@@ -10,23 +10,25 @@ import { Activity } from "lucide-react"
 import { SidebarComponent } from "../../components/Sidebar"
 import { TopbarComponent } from "../../components/Topbar"
 
-type SidebarItem = "dashboard" | "projects" | "settings"
+type SidebarItem = "projects" | "domains" | "environment-variables" | "deployments" | "settings"
 
-const sidebarRoutes: Array<{
-  item: SidebarItem
-  path: string
-}> = [
-  { item: "dashboard", path: "/dashboard" },
-  { item: "projects", path: "/projects" },
-  { item: "settings", path: "/settings" },
-]
+
 
 function getActiveSidebarItem(pathname: string): SidebarItem {
-  const matchedRoute = sidebarRoutes.find(
-    ({ path }) => pathname === path || pathname.startsWith(`${path}/`)
-  )
+  // Check for exact matches or matches starting with the feature path
+  const features: SidebarItem[] = ["domains", "environment-variables", "deployments", "settings"]
+  
+  for (const feature of features) {
+    if (pathname.includes(`/${feature}`)) {
+      return feature
+    }
+  }
 
-  return matchedRoute?.item ?? "dashboard"
+  if (pathname.startsWith("/projects")) {
+    return "projects"
+  }
+
+  return "projects"
 }
 
 export default function WorkspaceLayout({

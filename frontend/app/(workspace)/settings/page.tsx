@@ -1,8 +1,14 @@
+"use client"
+
+import { Settings } from "lucide-react"
+import { ProjectSelectionRequired } from "@/components/project-selection-required"
+
 export default function SettingsPage() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-3 p-4 md:p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-      <p className="text-sm text-muted-foreground">This is your settings page.</p>
-    </div>
+    <ProjectSelectionRequired
+      featureName="Settings"
+      description="Manage your account and project settings."
+      icon={Settings}
+    />
   )
 }

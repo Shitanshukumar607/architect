@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -10,7 +11,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -19,27 +19,43 @@ import {
 } from "@/components/ui/sidebar"
 import {
   BookOpen,
-  Gauge,
   GitBranch,
+  Globe,
   Plus,
+  Rocket,
   Settings,
   ShieldAlert,
+  ShieldCheck,
 } from "lucide-react"
 
 const navigationItems = [
-  {
-    key: "dashboard",
-    href: "/dashboard",
-    label: "Dashboard",
-    tooltip: "Dashboard",
-    icon: Gauge,
-  },
   {
     key: "projects",
     href: "/projects",
     label: "Projects",
     tooltip: "Projects",
     icon: GitBranch,
+  },
+  {
+    key: "domains",
+    href: "/domains",
+    label: "Domains",
+    tooltip: "Domains",
+    icon: Globe,
+  },
+  {
+    key: "environment-variables",
+    href: "/environment-variables",
+    label: "Environment Variables",
+    tooltip: "Environment Variables",
+    icon: ShieldCheck,
+  },
+  {
+    key: "deployments",
+    href: "/deployments",
+    label: "Deployments",
+    tooltip: "Deployments",
+    icon: Rocket,
   },
   {
     key: "settings",
@@ -65,19 +81,24 @@ const footerItems = [
   },
 ] as const
 
-type SidebarLinkItem = (typeof navigationItems)[number]
-type SidebarActionItem = (typeof footerItems)[number]
+interface SidebarNavItemData {
+  key?: string
+  href: string
+  label: string
+  tooltip: string
+  icon: React.ElementType
+}
 
 function SidebarNavItem({
   item,
   isActive,
 }: {
-  item: SidebarLinkItem | SidebarActionItem
+  item: SidebarNavItemData
   isActive?: boolean
 }) {
   const Icon = item.icon
   const isLinkItem = "href" in item
-  const isDisabledItem = "disabled" in item && item.disabled
+  const isDisabledItem = "disabled" in item && (item as { disabled?: boolean }).disabled
 
   return (
     <SidebarMenuItem>
@@ -105,8 +126,21 @@ function SidebarNavItem({
 export function SidebarComponent({
   activeItem,
 }: {
-  activeItem: "dashboard" | "projects" | "settings"
+  activeItem: "projects" | "domains" | "environment-variables" | "deployments" | "settings"
 }) {
+  const params = useParams()
+  const projectName = params?.projectName as string | undefined
+
+  const updatedNavigationItems: SidebarNavItemData[] = navigationItems.map((item) => {
+    if (projectName && item.key !== "projects") {
+      return {
+        ...item,
+        href: `/projects/${projectName}${item.href}`,
+      }
+    }
+    return { ...item }
+  })
+
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
@@ -143,7 +177,7 @@ export function SidebarComponent({
           {/* <SidebarGroupLabel>Navigation</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu className="flex gap-1">
-              {navigationItems.map((item) => (
+              {updatedNavigationItems.map((item) => (
                 <SidebarNavItem
                   key={item.key}
                   item={item}

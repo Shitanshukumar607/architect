@@ -30,7 +30,6 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
   const [error, setError] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
-    name: "p1",
     repoUrl: "https://github.com/Shitanshukumar607/frontend-test",
     framework: "VITE",
     buildCommand: "npm run build",
@@ -66,14 +65,13 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
       onOpenChange(false)
       // Reset form
       setFormData({
-        name: "",
         repoUrl: "",
         framework: "VITE",
         buildCommand: "npm run build",
         outputDir: "dist",
       })
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setIsLoading(false)
     }
@@ -81,7 +79,7 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-2xl">Create Project</DialogTitle>
@@ -97,18 +95,9 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
               </div>
             )}
             
+
             <div className="grid gap-2">
-              <Label htmlFor="name">Project Name</Label>
-              <Input
-                id="name"
-                placeholder="my-awesome-app"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="grid gap-2">
+
               <Label htmlFor="repoUrl">Repository URL</Label>
               <div className="relative">
                 <GitBranch className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -129,7 +118,7 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
                 <SelectTrigger>
                   <SelectValue placeholder="Select a framework" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="p-1">
                   <SelectItem value="VITE">Vite</SelectItem>
                   <SelectItem value="STATIC">Static HTML/JS</SelectItem>
                 </SelectContent>

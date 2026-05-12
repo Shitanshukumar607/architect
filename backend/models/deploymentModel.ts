@@ -33,7 +33,6 @@ export async function createDeployment(input: CreateDeploymentInput) {
   const framework = input.buildCommand
     ? ProjectFramework.VITE
     : ProjectFramework.STATIC;
-  const projectName = inferProjectName(input.repoUrl);
 
   const project = await prisma.project.upsert({
     where: {
@@ -49,8 +48,8 @@ export async function createDeployment(input: CreateDeploymentInput) {
     },
     create: {
       userId: input.userId,
-      name: projectName,
       repoUrl: input.repoUrl,
+      name: inferProjectName(input.repoUrl),
       buildCommand: input.buildCommand,
       outputDir: input.outputDir,
       framework,
@@ -62,6 +61,31 @@ export async function createDeployment(input: CreateDeploymentInput) {
       id: input.id,
       userId: input.userId,
       projectId: project.id,
+      repoUrl: input.repoUrl,
+      buildCommand: input.buildCommand,
+      outputDir: input.outputDir,
+      status: DeploymentStatus.QUEUED,
+    },
+  });
+}
+
+export type CreateDeploymentForProjectInput = {
+  id: string;
+  userId: string;
+  projectId: string;
+  repoUrl: string;
+  buildCommand: string | null;
+  outputDir: string;
+};
+
+export async function createDeploymentForProject(
+  input: CreateDeploymentForProjectInput,
+) {
+  return await prisma.deployment.create({
+    data: {
+      id: input.id,
+      userId: input.userId,
+      projectId: input.projectId,
       repoUrl: input.repoUrl,
       buildCommand: input.buildCommand,
       outputDir: input.outputDir,
@@ -94,4 +118,54 @@ export async function updateDeploymentStatus(
       finishedAt: options?.finishedAt,
     },
   });
+}
+
+export async function findLatestSuccessfulDeploymentByDomain(hostname: string) {
+  const domain = await prisma.projectDomain.findUnique({
+    where: { hostname },
+    include: {
+      project: {
+        include: {
+          deployments: {
+            where: { status: DeploymentStatus.SUCCESS },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  if (!domain || domain.project.deployments.length === 0) {
+    return null;
+  }
+
+  return domain.project.deployments[0];
+}
+
+export async function findDeploymentByIdOnly(id: string) {
+  return await prisma.deployment.findUnique({
+    where: { id },
+  });
+}
+
+export async function findLatestSuccessfulDeploymentByProjectName(
+  name: string,
+) {
+  const project = await prisma.project.findFirst({
+    where: { name },
+    include: {
+      deployments: {
+        where: { status: DeploymentStatus.SUCCESS },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  if (!project || project.deployments.length === 0) {
+    return null;
+  }
+
+  return project.deployments[0];
 }
