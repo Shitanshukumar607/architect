@@ -74,6 +74,12 @@ async function getDeploymentIdFromHost(host: string): Promise<string | null> {
   if (parts.length >= 2 || hostname.includes("localhost")) {
     const subdomain = parts[0];
 
+    const subdomainDomainDeployment =
+      await findLatestSuccessfulDeploymentByDomain(subdomain);
+    if (subdomainDomainDeployment) {
+      return subdomainDomainDeployment.id;
+    }
+
     const deployment = await findDeploymentByIdOnly(subdomain);
     if (deployment) {
       return deployment.id;
