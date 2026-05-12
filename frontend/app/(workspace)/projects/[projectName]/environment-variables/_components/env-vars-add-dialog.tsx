@@ -50,7 +50,7 @@ export function EnvVarsAddDialog({
             <Label htmlFor="env-key">Key</Label>
             <Input
               id="env-key"
-              placeholder="NEXT_PUBLIC_API_URL"
+              placeholder="SUPER_SECRET_KEY"
               value={newKey}
               onChange={(event) => onKeyChange(event.target.value)}
             />

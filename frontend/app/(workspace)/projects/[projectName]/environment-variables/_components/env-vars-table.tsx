@@ -52,12 +52,18 @@ export function EnvVarsTable({
     <div className="rounded-xl border bg-background/60 shadow-sm">
       <TooltipProvider>
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/30">
             <TableRow>
-              <TableHead>Variable</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead className="w-[160px]">Last Updated</TableHead>
-              <TableHead className="w-[56px]" />
+              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground">
+                Variable
+              </TableHead>
+              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground">
+                Value
+              </TableHead>
+              <TableHead className="w-[160px] px-4 py-3 text-xs font-semibold text-muted-foreground">
+                Last Updated
+              </TableHead>
+              <TableHead className="w-[56px] px-4 py-3 text-xs font-semibold text-muted-foreground" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -70,22 +76,16 @@ export function EnvVarsTable({
 
               return (
                 <TableRow key={envVar.id}>
-                  <TableCell>
+                  <TableCell className="px-4 py-3">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{envVar.key}</span>
-                        <Badge variant="secondary" className="rounded-full">
-                          All Environments
-                        </Badge>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        Project variable
-                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="max-w-[220px] truncate font-mono text-xs text-muted-foreground">
+                      <span className="inline-block max-w-[200px] truncate font-mono text-xs text-muted-foreground md:max-w-[260px]">
                         {isRevealed ? envVar.value : maskedValue}
                       </span>
                       <Tooltip>
@@ -108,10 +108,10 @@ export function EnvVarsTable({
                       </Tooltip>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="px-4 py-3 text-xs text-muted-foreground">
                     {updatedLabel}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="px-4 py-3 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon-sm">

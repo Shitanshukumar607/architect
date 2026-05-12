@@ -118,7 +118,7 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
                 <SelectTrigger>
                   <SelectValue placeholder="Select a framework" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="p-1">
                   <SelectItem value="VITE">Vite</SelectItem>
                   <SelectItem value="STATIC">Static HTML/JS</SelectItem>
                 </SelectContent>

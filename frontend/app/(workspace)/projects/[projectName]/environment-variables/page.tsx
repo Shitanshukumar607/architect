@@ -303,27 +303,8 @@ export default function ProjectEnvVarsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 md:p-8">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 p-5 md:p-8">
       <EnvVarsHeader
-        eyebrow={
-          <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-            {project?.name || projectName}
-          </Badge>
-        }
-        title="Environment Variables"
-        description={
-          <>
-            Store API keys, tokens, and config securely.{" "}
-            <a
-              href="https://vercel.com/docs/projects/environment-variables"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary hover:underline"
-            >
-              Learn more
-            </a>
-          </>
-        }
         actions={
           <>
             <Button
@@ -363,12 +344,6 @@ export default function ProjectEnvVarsPage() {
           <EnvVarsFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            environmentFilter={environmentFilter}
-            onEnvironmentFilterChange={setEnvironmentFilter}
-            editorFilter={editorFilter}
-            onEditorFilterChange={setEditorFilter}
-            variableFilter={variableFilter}
-            onVariableFilterChange={setVariableFilter}
             sortBy={sortBy}
             onSortChange={setSortBy}
           />
