@@ -1,11 +1,10 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link2, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -16,7 +15,7 @@ import { EnvVarsFilters } from "./_components/env-vars-filters"
 import { EnvVarsHeader } from "./_components/env-vars-header"
 import { EnvVarsSharedState } from "./_components/env-vars-shared-state"
 import { EnvVarsTable } from "./_components/env-vars-table"
-import type { EnvVar, Project } from "./_components/env-vars.types"
+import type { EnvVar } from "./_components/env-vars.types"
 
 const MASKED_VALUE = "••••••••"
 
@@ -46,14 +45,10 @@ export default function ProjectEnvVarsPage() {
     params.projectName as string | string[] | undefined
   )
 
-  const [project, setProject] = useState<Project | null>(null)
   const [envVars, setEnvVars] = useState<EnvVar[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [environmentFilter, setEnvironmentFilter] = useState("all")
-  const [editorFilter, setEditorFilter] = useState("all")
-  const [variableFilter, setVariableFilter] = useState("all")
   const [sortBy, setSortBy] = useState("updated")
 
   const [revealedValues, setRevealedValues] = useState<Record<string, boolean>>(
@@ -72,7 +67,7 @@ export default function ProjectEnvVarsPage() {
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     if (!projectName) return
     const response = await fetch(
       `${baseUrl}/api/projects/name/${projectName}`,
@@ -82,8 +77,6 @@ export default function ProjectEnvVarsPage() {
     )
 
     if (response.ok) {
-      const data = await response.json()
-      setProject(data)
       return
     }
 
@@ -93,9 +86,9 @@ export default function ProjectEnvVarsPage() {
     }
 
     toast.error(await getErrorMessage(response, "Failed to load project"))
-  }
+  }, [baseUrl, projectName, router])
 
-  const fetchEnvVars = async () => {
+  const fetchEnvVars = useCallback(async () => {
     if (!projectName) return
     const response = await fetch(
       `${baseUrl}/api/projects/name/${projectName}/env-vars`,
@@ -111,9 +104,9 @@ export default function ProjectEnvVarsPage() {
     }
 
     toast.error(await getErrorMessage(response, "Failed to load variables"))
-  }
+  }, [baseUrl, projectName])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!projectName) return
     setIsLoading(true)
     try {
@@ -121,13 +114,13 @@ export default function ProjectEnvVarsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [projectName, fetchProject, fetchEnvVars])
 
   useEffect(() => {
     if (projectName) {
       loadData()
     }
-  }, [projectName])
+  }, [projectName, loadData])
 
   useEffect(() => {
     if (editingVar) {

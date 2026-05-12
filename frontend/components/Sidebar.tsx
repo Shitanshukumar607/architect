@@ -11,7 +11,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -82,19 +81,24 @@ const footerItems = [
   },
 ] as const
 
-type SidebarLinkItem = (typeof navigationItems)[number]
-type SidebarActionItem = (typeof footerItems)[number]
+interface SidebarNavItemData {
+  key?: string
+  href: string
+  label: string
+  tooltip: string
+  icon: React.ElementType
+}
 
 function SidebarNavItem({
   item,
   isActive,
 }: {
-  item: SidebarLinkItem | SidebarActionItem
+  item: SidebarNavItemData
   isActive?: boolean
 }) {
   const Icon = item.icon
   const isLinkItem = "href" in item
-  const isDisabledItem = "disabled" in item && item.disabled
+  const isDisabledItem = "disabled" in item && (item as { disabled?: boolean }).disabled
 
   return (
     <SidebarMenuItem>
@@ -127,14 +131,14 @@ export function SidebarComponent({
   const params = useParams()
   const projectName = params?.projectName as string | undefined
 
-  const updatedNavigationItems = navigationItems.map((item) => {
+  const updatedNavigationItems: SidebarNavItemData[] = navigationItems.map((item) => {
     if (projectName && item.key !== "projects") {
       return {
         ...item,
-        href: `/projects/${projectName}${item.href}` as const,
+        href: `/projects/${projectName}${item.href}`,
       }
     }
-    return item
+    return { ...item }
   })
 
   return (

@@ -1,14 +1,21 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { ProjectDeployments } from "../_components/project-deployments"
+
+interface Deployment {
+  id: string
+  status: string
+  createdAt: string
+  finishedAt?: string
+}
 
 interface Project {
   id: string
   name: string
-  deployments: any[]
+  deployments: Deployment[]
 }
 
 export default function ProjectDeploymentsPage() {
@@ -16,7 +23,7 @@ export default function ProjectDeploymentsPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       setIsLoading(true)
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -32,13 +39,13 @@ export default function ProjectDeploymentsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.projectName])
 
   useEffect(() => {
     if (params.projectName) {
       fetchProject()
     }
-  }, [params.projectName])
+  }, [params.projectName, fetchProject])
 
   if (isLoading) {
     return (

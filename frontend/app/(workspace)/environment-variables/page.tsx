@@ -133,7 +133,7 @@ export default function EnvVarsPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-lg text-muted-foreground">
-                No projects found matching "{searchQuery}"
+                No projects found matching &quot;{searchQuery}&quot;
               </p>
             </div>
           )}

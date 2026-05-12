@@ -72,8 +72,9 @@ export default function Page() {
       })
       
       setRepoUrl("")
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred", {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An error occurred"
+      toast.error(message, {
         id: toastId,
       })
     } finally {

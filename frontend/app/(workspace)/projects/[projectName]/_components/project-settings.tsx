@@ -13,17 +13,33 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Globe, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+
+interface Domain {
+  id: string
+  hostname: string
+  verified: boolean
+}
+
+interface EnvVar {
+  id: string
+  key: string
+  value: string
+}
+
+interface Project {
+  framework: string
+  buildCommand: string
+  outputDir: string
+  domains?: Domain[]
+  envVars?: EnvVar[]
+}
 
 export function ProjectSettings({
   project,
-  onRefresh,
 }: {
-  project: any
+  project: Project
   onRefresh: () => void
 }) {
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState("general")
 
   return (
@@ -132,7 +148,7 @@ export function ProjectSettings({
                 </div>
 
                 <div className="space-y-4">
-                  {project.domains?.map((domain: any) => (
+                  {project.domains?.map((domain: Domain) => (
                     <div
                       key={domain.id}
                       className="flex items-center justify-between rounded-lg border p-4"
@@ -159,7 +175,7 @@ export function ProjectSettings({
                       </div>
                     </div>
                   ))}
-                  {!project.domains?.length && (
+                  {(project.domains?.length ?? 0) === 0 && (
                     <div className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
                       No domains configured yet.
                     </div>
@@ -200,9 +216,9 @@ export function ProjectSettings({
                 </div>
 
                 <div className="rounded-md border">
-                  {project.envVars?.length > 0 ? (
+                  {(project.envVars?.length ?? 0) > 0 ? (
                     <div className="divide-y">
-                      {project.envVars.map((env: any) => (
+                      {project.envVars?.map((env: EnvVar) => (
                         <div
                           key={env.id}
                           className="flex items-center justify-between bg-muted/20 p-4"

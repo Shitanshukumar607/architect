@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -50,7 +50,7 @@ export default function ProjectDomainsPage() {
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await fetch(
@@ -69,7 +69,7 @@ export default function ProjectDomainsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [baseUrl, params.projectName])
 
   const handleAddDomain = async () => {
     const trimmedHostname = newDomain.trim()
@@ -98,7 +98,7 @@ export default function ProjectDomainsPage() {
       } else {
         toast.error(await getErrorMessage(response, "Failed to add domain"))
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred while adding the domain")
     } finally {
       setIsAddingDomain(false)
@@ -139,7 +139,7 @@ export default function ProjectDomainsPage() {
       } else {
         toast.error(await getErrorMessage(response, "Failed to update domain"))
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred while updating the domain")
     } finally {
       setIsUpdatingDomain(false)
@@ -160,7 +160,7 @@ export default function ProjectDomainsPage() {
     if (params.projectName) {
       fetchProject()
     }
-  }, [params.projectName])
+  }, [params.projectName, fetchProject])
 
   useEffect(() => {
     if (editingDomain) {

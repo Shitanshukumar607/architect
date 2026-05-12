@@ -5,18 +5,26 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { formatDistanceToNow, format } from "date-fns"
 import { GitBranch, Globe, Loader2, PlayCircle, RefreshCw } from "lucide-react"
+
+interface Deployment {
+  id: string
+  status: string
+  createdAt: string
+  finishedAt?: string
+}
+
+interface Project {
+  deployments?: Deployment[]
+}
 
 export function ProjectDeployments({
   project,
   onRefresh,
 }: {
-  project: any
+  project: Project
   onRefresh: () => void
 }) {
   return (
@@ -40,7 +48,7 @@ export function ProjectDeployments({
       </div>
 
       <div className="space-y-4">
-        {project.deployments?.map((deployment: any) => (
+        {project.deployments?.map((deployment: Deployment) => (
           <Card key={deployment.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="flex flex-col sm:flex-row">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { ProjectSettings } from "../_components/project-settings"
 
@@ -19,7 +19,7 @@ export default function ProjectSettingsPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       setIsLoading(true)
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -35,13 +35,13 @@ export default function ProjectSettingsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.projectName])
 
   useEffect(() => {
     if (params.projectName) {
       fetchProject()
     }
-  }, [params.projectName])
+  }, [params.projectName, fetchProject])
 
   if (isLoading) {
     return (

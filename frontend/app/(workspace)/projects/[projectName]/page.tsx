@@ -10,22 +10,20 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatDistanceToNow, format } from "date-fns"
+import { formatDistanceToNow } from "date-fns"
 import {
-  ArrowUpRight,
   Clock,
   ExternalLink,
   GitBranch,
   Globe,
   LayoutTemplate,
   Loader2,
-  Settings,
   Terminal,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { ProjectDeployments } from "./_components/project-deployments"
 import { ProjectSettings } from "./_components/project-settings"
 
@@ -68,7 +66,7 @@ export default function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       setIsLoading(true)
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -86,13 +84,13 @@ export default function ProjectPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.projectName, router])
 
   useEffect(() => {
     if (params.projectName) {
       fetchProject()
     }
-  }, [params.projectName])
+  }, [params.projectName, fetchProject])
 
   if (isLoading) {
     return (

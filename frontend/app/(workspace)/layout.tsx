@@ -12,16 +12,7 @@ import { TopbarComponent } from "../../components/Topbar"
 
 type SidebarItem = "projects" | "domains" | "environment-variables" | "deployments" | "settings"
 
-const sidebarRoutes: Array<{
-  item: SidebarItem
-  path: string
-}> = [
-  { item: "projects", path: "/projects" },
-  { item: "domains", path: "/domains" },
-  { item: "environment-variables", path: "/environment-variables" },
-  { item: "deployments", path: "/deployments" },
-  { item: "settings", path: "/settings" },
-]
+
 
 function getActiveSidebarItem(pathname: string): SidebarItem {
   // Check for exact matches or matches starting with the feature path
