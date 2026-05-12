@@ -34,9 +34,12 @@ export default function DeploymentLogsPage() {
   const fetchDeployment = useCallback(async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/deploy/${params.deploymentId}`, {
-        credentials: "include",
-      })
+      const response = await fetch(
+        `${baseUrl}/api/deploy/${params.deploymentId}`,
+        {
+          credentials: "include",
+        }
+      )
       if (response.ok) {
         const data = await response.json()
         setDeployment(data)

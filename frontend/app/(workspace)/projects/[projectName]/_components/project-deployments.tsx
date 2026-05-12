@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
-import { GitBranch, Loader2, PlayCircle, RefreshCw, CheckCircle2, XCircle, Clock, MoreHorizontal, ExternalLink } from "lucide-react"
+import { GitBranch, Loader2, PlayCircle, RefreshCw, CheckCircle2, XCircle, Clock, MoreHorizontal, ExternalLink, Rocket } from "lucide-react"
 import Link from "next/link"
 import {
   Table,
@@ -29,6 +30,9 @@ interface Deployment {
 
 interface Project {
   name?: string
+  repoUrl?: string
+  buildCommand?: string
+  outputDir?: string
   deployments?: Deployment[]
 }
 
@@ -39,6 +43,37 @@ export function ProjectDeployments({
   project: Project
   onRefresh: () => void
 }) {
+  const [isDeploying, setIsDeploying] = useState(false)
+
+  const handleRedeploy = async () => {
+    try {
+      setIsDeploying(true)
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+      const response = await fetch(`${baseUrl}/api/deploy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          repoUrl: project.repoUrl,
+          buildCommand: project.buildCommand,
+          outputDir: project.outputDir,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to redeploy")
+      }
+
+      onRefresh()
+    } catch (error) {
+      console.error("Failed to redeploy:", error)
+    } finally {
+      setIsDeploying(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'SUCCESS': 
@@ -88,15 +123,26 @@ export function ProjectDeployments({
             View and monitor all previous deployments for this project.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          className="gap-2 transition-all hover:bg-secondary"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleRedeploy}
+            disabled={isDeploying || !project.repoUrl}
+            className="gap-2 transition-all shadow-sm"
+          >
+            {isDeploying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+            Redeploy
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            className="gap-2 transition-all hover:bg-secondary"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-xl border bg-background/60 shadow-sm">

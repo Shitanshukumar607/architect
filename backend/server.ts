@@ -24,7 +24,7 @@ app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
 
-app.use("/deploy", deployRoutes);
+app.use("/api/deploy", deployRoutes);
 app.use("/api/projects", projectRoutes);
 
 app.get("/health", (req, res) => {
