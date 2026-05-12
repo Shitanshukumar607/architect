@@ -119,12 +119,24 @@ export async function addProjectDomain(
   name: string,
   hostname: string,
 ) {
+  if (hostname.trim().length === 0) {
+    throw new ServiceError("hostname must be a non-empty string", 400);
+  }
+
+  const trimmedHostname = hostname.trim();
   const project = await getProjectByName(userId, name);
 
-  return await createProjectDomain({
-    hostname,
-    projectId: project.id,
-  });
+  try {
+    return await createProjectDomain({
+      hostname: trimmedHostname,
+      projectId: project.id,
+    });
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ServiceError("Domain already exists", 400);
+    }
+    throw error;
+  }
 }
 
 type UpdateProjectDomainPayload = {
