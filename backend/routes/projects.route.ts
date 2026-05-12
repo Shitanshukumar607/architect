@@ -8,6 +8,7 @@ import {
   addProjectEnvVarController,
   deleteProjectEnvVarController,
   getProjectEnvVarsController,
+  updateProjectDomainController,
   updateProjectEnvVarController,
 } from "../controllers/project.controller";
 import { requireAuth } from "../middleware/authMiddleware";
@@ -19,6 +20,11 @@ router.post("/", requireAuth, createProjectController);
 router.get("/name/:name", requireAuth, getProjectByNameController);
 router.get("/name/:name/env-vars", requireAuth, getProjectEnvVarsController);
 router.post("/name/:name/domains", requireAuth, addProjectDomainController);
+router.put(
+  "/name/:name/domains/:domainId",
+  requireAuth,
+  updateProjectDomainController,
+);
 router.post("/name/:name/env-vars", requireAuth, addProjectEnvVarController);
 router.put(
   "/name/:name/env-vars/:envVarId",

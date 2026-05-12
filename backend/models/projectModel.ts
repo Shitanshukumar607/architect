@@ -27,6 +27,10 @@ type UpdateProjectEnvVarInput = {
   value?: string;
 };
 
+type UpdateProjectDomainInput = {
+  hostname?: string;
+};
+
 export async function createProject(input: CreateProjectInput) {
   return await prisma.project.create({
     data: {
@@ -99,6 +103,30 @@ export async function createProjectDomain(input: CreateProjectDomainInput) {
       projectId: input.projectId,
       verified: input.verified ?? false,
     },
+  });
+}
+
+export async function findProjectDomainById(
+  projectId: string,
+  domainId: string,
+) {
+  return await prisma.projectDomain.findFirst({
+    where: {
+      id: domainId,
+      projectId,
+    },
+  });
+}
+
+export async function updateProjectDomainById(
+  domainId: string,
+  data: UpdateProjectDomainInput,
+) {
+  return await prisma.projectDomain.update({
+    where: {
+      id: domainId,
+    },
+    data,
   });
 }
 

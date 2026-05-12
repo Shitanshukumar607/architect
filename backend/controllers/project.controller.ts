@@ -8,6 +8,7 @@ import {
   getProjectByName,
   listProjectsForUser,
   listProjectEnvVars,
+  updateProjectDomain,
   updateProjectEnvVar,
 } from "../services/project.service";
 import { ServiceError } from "../services/service-error";
@@ -86,6 +87,32 @@ export async function addProjectDomainController(req: Request, res: Response) {
     }
     console.error("Add domain error:", error);
     return res.status(500).json({ error: "Failed to add domain" });
+  }
+}
+
+export async function updateProjectDomainController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const session = (req as any).session;
+    const { name, domainId } = req.params as {
+      name: string;
+      domainId: string;
+    };
+    const { hostname } = req.body as { hostname?: string };
+
+    const domain = await updateProjectDomain(session.user.id, name, domainId, {
+      hostname,
+    });
+
+    return res.status(200).json(domain);
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Update domain error:", error);
+    return res.status(500).json({ error: "Failed to update domain" });
   }
 }
 

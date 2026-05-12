@@ -1,8 +1,8 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
-import { Loader2, Plus, Globe } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -11,30 +11,27 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 
-interface Domain {
-  id: string
-  hostname: string
-  verified: boolean
-}
+import { DomainsFilters } from "./_components/domains-filters"
+import { DomainsHeader } from "./_components/domains-header"
+import { DomainsTable } from "./_components/domains-table"
+import { DomainsEmptyState } from "./_components/domains-empty-state"
+import { DomainsAddDialog } from "./_components/domains-add-dialog"
+import { DomainsEditDialog } from "./_components/domains-edit-dialog"
+import type { Domain, Project } from "./_components/domains.types"
 
-interface Project {
-  id: string
-  name: string
-  domains: Domain[]
+async function getErrorMessage(response: Response, fallback: string) {
+  try {
+    const data = await response.json()
+    if (data?.error) {
+      return data.error as string
+    }
+  } catch {
+    // ignore
+  }
+  return fallback
 }
 
 export default function ProjectDomainsPage() {
@@ -42,13 +39,20 @@ export default function ProjectDomainsPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  const [isAddOpen, setIsAddOpen] = useState(false)
   const [isAddingDomain, setIsAddingDomain] = useState(false)
   const [newDomain, setNewDomain] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const [editingDomain, setEditingDomain] = useState<Domain | null>(null)
+  const [editHostname, setEditHostname] = useState("")
+  const [isUpdatingDomain, setIsUpdatingDomain] = useState(false)
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
   const fetchProject = async () => {
     try {
       setIsLoading(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
       const response = await fetch(
         `${baseUrl}/api/projects/name/${params.projectName}`,
         {
@@ -68,17 +72,20 @@ export default function ProjectDomainsPage() {
   }
 
   const handleAddDomain = async () => {
-    if (!newDomain) return
+    const trimmedHostname = newDomain.trim()
+    if (!trimmedHostname) {
+      toast.error("Hostname is required")
+      return
+    }
 
     try {
       setIsAddingDomain(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
       const response = await fetch(
         `${baseUrl}/api/projects/name/${params.projectName}/domains`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hostname: newDomain }),
+          body: JSON.stringify({ hostname: trimmedHostname }),
           credentials: "include",
         }
       )
@@ -86,9 +93,10 @@ export default function ProjectDomainsPage() {
       if (response.ok) {
         toast.success("Domain added successfully")
         setNewDomain("")
+        setIsAddOpen(false)
         fetchProject()
       } else {
-        toast.error("Failed to add domain")
+        toast.error(await getErrorMessage(response, "Failed to add domain"))
       }
     } catch (error) {
       toast.error("An error occurred while adding the domain")
@@ -97,11 +105,81 @@ export default function ProjectDomainsPage() {
     }
   }
 
+  const handleUpdateDomain = async () => {
+    if (!editingDomain) return
+    const trimmedHostname = editHostname.trim()
+
+    if (!trimmedHostname) {
+      toast.error("Hostname is required")
+      return
+    }
+
+    if (trimmedHostname === editingDomain.hostname) {
+      toast.message("No changes to save")
+      return
+    }
+
+    try {
+      setIsUpdatingDomain(true)
+      const response = await fetch(
+        `${baseUrl}/api/projects/name/${params.projectName}/domains/${editingDomain.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hostname: trimmedHostname }),
+          credentials: "include",
+        }
+      )
+
+      if (response.ok) {
+        toast.success("Domain updated successfully")
+        setEditingDomain(null)
+        setEditHostname("")
+        fetchProject()
+      } else {
+        toast.error(await getErrorMessage(response, "Failed to update domain"))
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating the domain")
+    } finally {
+      setIsUpdatingDomain(false)
+    }
+  }
+
+  const handleCopyDomain = async (hostname: string) => {
+    try {
+      await navigator.clipboard.writeText(hostname)
+      toast.success("Domain copied to clipboard")
+    } catch (error) {
+      console.error("Copy domain error:", error)
+      toast.error("Failed to copy domain")
+    }
+  }
+
   useEffect(() => {
     if (params.projectName) {
       fetchProject()
     }
   }, [params.projectName])
+
+  useEffect(() => {
+    if (editingDomain) {
+      setEditHostname(editingDomain.hostname)
+    }
+  }, [editingDomain])
+
+  const filteredDomains = useMemo(() => {
+    const list = project?.domains ?? []
+    const query = searchQuery.trim().toLowerCase()
+
+    if (!query) {
+      return list
+    }
+
+    return list.filter((domain) =>
+      domain.hostname.toLowerCase().includes(query)
+    )
+  }, [project, searchQuery])
 
   if (isLoading) {
     return (
@@ -114,92 +192,106 @@ export default function ProjectDomainsPage() {
   if (!project) return null
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-8 p-4 duration-500 fade-in md:p-8">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
-          <p className="text-lg text-muted-foreground">
-            Manage custom domains for{" "}
-            <span className="font-semibold text-foreground">
-              {project.name}
-            </span>
-          </p>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2 rounded-xl shadow-lg">
-              <Plus className="h-4 w-4" />
-              Add Domain
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add Custom Domain</DialogTitle>
-              <DialogDescription>
-                Enter the hostname you want to associate with this project.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="hostname">Hostname</Label>
-                <Input
-                  id="hostname"
-                  placeholder="example.com"
-                  value={newDomain}
-                  onChange={(e) => setNewDomain(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleAddDomain} disabled={isAddingDomain}>
-                {isAddingDomain ? "Adding..." : "Add Domain"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 p-5 md:p-8">
+      <DomainsHeader
+        actions={
+          <Button className="gap-2" onClick={() => setIsAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add Domain
+          </Button>
+        }
+      />
 
-      <Card className="border-dashed bg-background/50">
-        <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-          {project.domains && project.domains.length > 0 ? (
-            <div className="w-full space-y-4">
-              {project.domains.map((domain) => (
-                <div
-                  key={domain.id}
-                  className="flex items-center justify-between rounded-lg border bg-card p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      <Globe className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="font-medium">{domain.hostname}</span>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList variant="line">
+          <TabsTrigger value="all">All Domains</TabsTrigger>
+          <TabsTrigger value="checklist">Setup Checklist</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="mt-4 space-y-4">
+          <DomainsFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+
+          {filteredDomains.length === 0 ? (
+            <DomainsEmptyState onAdd={() => setIsAddOpen(true)} />
+          ) : (
+            <DomainsTable
+              items={filteredDomains}
+              onEdit={setEditingDomain}
+              onCopy={handleCopyDomain}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="checklist" className="mt-4">
+          <Card className="bg-background/60 shadow-sm">
+            <CardHeader>
+              <CardTitle>Setup Checklist</CardTitle>
+              <CardDescription>
+                Follow these steps to verify your custom domain.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {[
+                {
+                  title: "Add a DNS record",
+                  description:
+                    "Create a CNAME or A record with your DNS provider that points to our servers. You can find the target in your project settings.",
+                },
+                {
+                  title: "Wait for propagation",
+                  description:
+                    "DNS changes can take anywhere from a few minutes to 24 hours to propagate globally. We'll keep checking the status automatically.",
+                },
+                {
+                  title: "Verify and Go Live",
+                  description:
+                    "Once the records are detected, your domain will be marked as verified and will start serving your project immediately.",
+                },
+              ].map((step, index) => (
+                <div key={step.title} className="flex gap-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-muted/50 text-xs font-bold">
+                    {index + 1}
                   </div>
-                  <Badge variant={domain.verified ? "default" : "secondary"}>
-                    {domain.verified ? "Verified" : "Pending"}
-                  </Badge>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold leading-none">{step.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
                 </div>
               ))}
-            </div>
-          ) : (
-            <>
-              <div className="mb-4 rounded-full bg-primary/10 p-4">
-                <Globe className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="mb-2 text-xl font-semibold">
-                No domains assigned
-              </h3>
-              <p className="mb-6 max-w-sm text-muted-foreground">
-                Add a custom domain to make your project accessible via your own
-                URL.
-              </p>
-              <Button className="gap-2 rounded-xl">
-                <Plus className="h-4 w-4" />
-                Add Domain
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <DomainsAddDialog
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        onSubmit={handleAddDomain}
+        isLoading={isAddingDomain}
+        newDomain={newDomain}
+        onDomainChange={setNewDomain}
+        isDisabled={isAddingDomain || newDomain.trim().length === 0}
+      />
+
+      <DomainsEditDialog
+        open={Boolean(editingDomain)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingDomain(null)
+            setEditHostname("")
+          }
+        }}
+        onSubmit={handleUpdateDomain}
+        isLoading={isUpdatingDomain}
+        editHostname={editHostname}
+        onHostnameChange={setEditHostname}
+        isDisabled={isUpdatingDomain || editHostname.trim().length === 0}
+      />
     </div>
   )
 }

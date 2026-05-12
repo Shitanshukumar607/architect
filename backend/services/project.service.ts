@@ -4,11 +4,13 @@ import {
   createProjectDomain,
   createProjectEnvVar,
   deleteProjectEnvVarById,
+  findProjectDomainById,
   findProjectEnvVarById,
   getProjectByIdForUser,
   getProjectByNameForUser,
   listProjectEnvVarsByProjectId,
   listProjectsByUser,
+  updateProjectDomainById,
   updateProjectEnvVarById,
 } from "../models/projectModel";
 import { createDeploymentForProject } from "../models/deploymentModel";
@@ -123,6 +125,51 @@ export async function addProjectDomain(
     hostname,
     projectId: project.id,
   });
+}
+
+type UpdateProjectDomainPayload = {
+  hostname?: unknown;
+};
+
+export async function updateProjectDomain(
+  userId: string,
+  name: string,
+  domainId: string,
+  payload: UpdateProjectDomainPayload,
+) {
+  if (!domainId) {
+    throw new ServiceError("Domain not found", 404);
+  }
+
+  const { hostname } = payload;
+  const data: { hostname?: string } = {};
+
+  if (hostname !== undefined) {
+    if (typeof hostname !== "string" || hostname.trim().length === 0) {
+      throw new ServiceError("hostname must be a non-empty string", 400);
+    }
+    data.hostname = hostname.trim();
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ServiceError("Nothing to update", 400);
+  }
+
+  const project = await getProjectByName(userId, name);
+  const domain = await findProjectDomainById(project.id, domainId);
+
+  if (!domain) {
+    throw new ServiceError("Domain not found", 404);
+  }
+
+  try {
+    return await updateProjectDomainById(domain.id, data);
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ServiceError("Domain already exists", 400);
+    }
+    throw error;
+  }
 }
 
 export async function addProjectEnvVar(
