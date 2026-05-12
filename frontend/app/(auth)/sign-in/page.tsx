@@ -44,7 +44,7 @@ export default function SignInPage() {
       {
         onSuccess: () => {
           toast.success("Signed in successfully!")
-          router.push("/")
+          router.push("/projects")
         },
         onError: (ctx) => {
           toast.error(ctx.error.message || "Failed to sign in")

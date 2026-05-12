@@ -52,7 +52,7 @@ export default function SignUpPage() {
         {
           onSuccess: () => {
             toast.success("Account created successfully!")
-            router.push("/")
+            router.push("/projects")
           },
           onError: (ctx) => {
             toast.error(ctx.error.message || "Failed to create account")
