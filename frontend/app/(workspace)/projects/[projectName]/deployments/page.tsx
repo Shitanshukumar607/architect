@@ -58,11 +58,11 @@ export default function ProjectDeploymentsPage() {
   if (!project) return null
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-8 p-4 duration-500 fade-in md:p-8">
-      <div className="flex flex-col gap-1">
+    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-8 p-5 duration-700 fade-in slide-in-from-bottom-4 md:p-8">
+      <div className="flex flex-col gap-1.5 border-b pb-6">
         <h1 className="text-3xl font-bold tracking-tight">Deployments</h1>
-        <p className="text-lg text-muted-foreground">
-          View and manage deployments for <span className="font-semibold text-foreground">{project.name}</span>
+        <p className="text-muted-foreground">
+          View and manage deployments for <span className="font-semibold text-foreground/80">{project.name}</span>
         </p>
       </div>
       <ProjectDeployments project={project} onRefresh={fetchProject} />

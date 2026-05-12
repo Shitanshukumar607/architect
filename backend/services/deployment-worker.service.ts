@@ -4,14 +4,19 @@ import fs from "fs";
 import path from "path";
 import util from "util";
 import { pop } from "../queue/queue";
-import { updateDeploymentStatus } from "../models/deploymentModel";
+import { updateDeploymentStatus, addDeploymentLog } from "../models/deploymentModel";
 import { uploadDirectoryToS3 } from "../utils/uploadToS3";
 import { rewriteHtmlPaths } from "../utils/rewritePaths";
 
 const execPromise = util.promisify(exec);
 
+async function logAndPrint(jobId: string, level: string, message: string) {
+  console.log(`[Worker - ${jobId}] ${message}`);
+  await addDeploymentLog(jobId, level, message);
+}
+
 async function processDeploymentJob(job: Deployment) {
-  console.log(`[Worker] Started processing deployment: ${job.id}`);
+  await logAndPrint(job.id, "info", "Started processing deployment");
 
   await updateDeploymentStatus(job.id, DeploymentStatus.BUILDING, {
     startedAt: new Date(),
@@ -31,64 +36,67 @@ async function processDeploymentJob(job: Deployment) {
     try {
       await execPromise("docker --version");
     } catch {
+      await logAndPrint(job.id, "error", "Docker is not installed or not accessible");
       throw new Error("Docker is not installed or not accessible");
     }
 
-    console.log(`[Worker] Starting container ${containerName}`);
+    await logAndPrint(job.id, "info", `Starting container ${containerName}`);
     await execPromise(
       `docker run -d --name ${containerName} -v ${projectTmpDir}:/tmp node:20 tail -f /dev/null`,
     );
 
     try {
-      console.log(`[Worker] Cloning repository inside container`);
-      await execPromise(
+      await logAndPrint(job.id, "info", `Cloning repository inside container`);
+      const { stdout: cloneOut, stderr: cloneErr } = await execPromise(
         `docker exec ${containerName} git clone ${job.repoUrl} /app`,
       );
+      if (cloneOut) await logAndPrint(job.id, "info", cloneOut);
+      if (cloneErr) await logAndPrint(job.id, "info", cloneErr);
 
       if (job.buildCommand) {
-        console.log(`[Worker] Installing dependencies inside container`);
-        await execPromise(`docker exec -w /app ${containerName} npm install`);
+        await logAndPrint(job.id, "info", `Installing dependencies inside container`);
+        const { stdout: npmOut, stderr: npmErr } = await execPromise(`docker exec -w /app ${containerName} npm install`);
+        if (npmOut) await logAndPrint(job.id, "info", npmOut);
+        if (npmErr) await logAndPrint(job.id, "info", npmErr);
 
-        console.log(`[Worker] Running build command inside container`);
-        await execPromise(
+        await logAndPrint(job.id, "info", `Running build command: ${job.buildCommand}`);
+        const { stdout: buildOut, stderr: buildErr } = await execPromise(
           `docker exec -w /app ${containerName} ${job.buildCommand}`,
         );
+        if (buildOut) await logAndPrint(job.id, "info", buildOut);
+        if (buildErr) await logAndPrint(job.id, "info", buildErr);
       } else {
-        console.log(
-          `[Worker] No buildCommand provided; treating as static deployment`,
-        );
+        await logAndPrint(job.id, "info", `No buildCommand provided; treating as static deployment`);
       }
 
-      console.log(`[Worker] Copying output to host using docker cp`);
+      await logAndPrint(job.id, "info", `Copying output to host using docker cp`);
       await execPromise(
         `docker cp ${containerName}:/app/${job.outputDir} ${tmpDir}`,
       );
 
       if (fs.existsSync(tmpDir)) {
-        // rewriteHtmlPaths(tmpDir, job.id);
-        console.log(`[Worker] Uploading files to S3`);
+        await logAndPrint(job.id, "info", `Uploading files to S3`);
         await uploadDirectoryToS3(tmpDir, `deployments/${job.id}`);
 
         await updateDeploymentStatus(job.id, DeploymentStatus.SUCCESS, {
           finishedAt: new Date(),
         });
-        console.log(
-          `[Worker] Deployment ${job.id} completed successfully. Uploaded to S3 at deployments/${job.id}`,
-        );
+        await logAndPrint(job.id, "info", `Deployment completed successfully`);
       } else {
+        await logAndPrint(job.id, "error", `Output directory ${job.outputDir} not found`);
         throw new Error(`Output directory ${job.outputDir} not found`);
       }
     } finally {
-      console.log(`[Worker] Cleaning up container ${containerName}`);
+      await logAndPrint(job.id, "info", `Cleaning up container`);
       await execPromise(`docker rm -f ${containerName}`).catch(() => {});
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    await logAndPrint(job.id, "error", `Deployment failed: ${message}`);
     await updateDeploymentStatus(job.id, DeploymentStatus.FAILED, {
       finishedAt: new Date(),
       errorMessage: message,
     });
-    console.error(`[Worker] Deployment ${job.id} failed:`, error);
   }
 }
 

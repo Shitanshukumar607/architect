@@ -97,6 +97,11 @@ export async function createDeploymentForProject(
 export async function getDeployment(id: string, userId: string) {
   return await prisma.deployment.findFirst({
     where: { id, userId },
+    include: {
+      logs: {
+        orderBy: { timestamp: "asc" },
+      },
+    },
   });
 }
 
@@ -168,4 +173,18 @@ export async function findLatestSuccessfulDeploymentByProjectName(
   }
 
   return project.deployments[0];
+}
+
+export async function addDeploymentLog(
+  deploymentId: string,
+  level: string,
+  message: string,
+) {
+  return await prisma.deploymentLog.create({
+    data: {
+      deploymentId,
+      level,
+      message,
+    },
+  });
 }
