@@ -75,10 +75,35 @@ export async function createProjectForUser(
     return project;
   } catch (error: any) {
     if (error?.code === "P2002") {
-      throw new ServiceError(
-        "A project with this repository already exists",
-        400,
-      );
+      const target = error?.meta?.target;
+      const targetFields = Array.isArray(target)
+        ? target.map((field) => String(field))
+        : typeof target === "string"
+          ? [target]
+          : [];
+      const targetText = targetFields.join(",");
+
+      if (
+        targetFields.includes("repoUrl") ||
+        targetText.includes("repoUrl")
+      ) {
+        throw new ServiceError(
+          "A project with this repository already exists",
+          400,
+        );
+      }
+
+      if (
+        (targetFields.includes("userId") && targetFields.includes("name")) ||
+        (targetText.includes("userId") && targetText.includes("name"))
+      ) {
+        throw new ServiceError(
+          "A project with this name already exists",
+          400,
+        );
+      }
+
+      throw new ServiceError("A project with these details already exists", 400);
     }
     throw error;
   }
