@@ -227,17 +227,25 @@ export async function updateProjectEnvVar(
   const data: { key?: string; value?: string } = {};
 
   if (key !== undefined) {
-    if (typeof key !== "string" || key.length === 0) {
+    if (typeof key !== "string") {
       throw new ServiceError("key must be a non-empty string", 400);
     }
-    data.key = key;
+    const trimmedKey = key.trim();
+    if (trimmedKey.length === 0) {
+      throw new ServiceError("key must be a non-empty string", 400);
+    }
+    data.key = trimmedKey;
   }
 
   if (value !== undefined) {
-    if (typeof value !== "string" || value.length === 0) {
+    if (typeof value !== "string") {
       throw new ServiceError("value must be a non-empty string", 400);
     }
-    data.value = value;
+    const trimmedValue = value.trim();
+    if (trimmedValue.length === 0) {
+      throw new ServiceError("value must be a non-empty string", 400);
+    }
+    data.value = trimmedValue;
   }
 
   if (Object.keys(data).length === 0) {
