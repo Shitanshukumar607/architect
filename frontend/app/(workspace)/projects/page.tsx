@@ -19,7 +19,6 @@ import Link from "next/link"
 import { useState } from "react"
 import { CreateProjectDialog } from "./_components/create-project-dialog"
 import { useProjects } from "@/lib/queries"
-import { Project } from "@/lib/types"
 
 export default function ProjectsPage() {
   const { data: projects = [], isLoading, refetch } = useProjects()

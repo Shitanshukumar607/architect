@@ -9,22 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDistanceToNow, format } from "date-fns"
 import { useDeploymentLogs } from "@/lib/queries"
 
-interface DeploymentLog {
-  id: string
-  level: string
-  message: string
-  timestamp: string
-}
-
-interface Deployment {
-  id: string
-  status: string
-  createdAt: string
-  finishedAt?: string
-  buildCommand: string
-  repoUrl: string
-  logs: DeploymentLog[]
-}
+import { DeploymentLog } from "@/lib/types"
 
 export default function DeploymentLogsPage() {
   const params = useParams()
@@ -40,7 +25,7 @@ export default function DeploymentLogsPage() {
   useEffect(() => {
     if (
       isError &&
-      (error as any)?.message === "Failed to fetch deployment logs"
+      (error as Error)?.message === "Failed to fetch deployment logs"
     ) {
       router.push(`/projects/${params.projectName}/deployments`)
     }

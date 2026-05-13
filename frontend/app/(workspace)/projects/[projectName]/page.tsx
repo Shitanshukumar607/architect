@@ -28,38 +28,7 @@ import { ProjectDeployments } from "./_components/project-deployments"
 import { ProjectSettings } from "./_components/project-settings"
 import { useProject } from "@/lib/queries"
 
-interface Deployment {
-  id: string
-  status: string
-  createdAt: string
-  finishedAt?: string
-  buildCommand: string
-}
-
-interface Domain {
-  id: string
-  hostname: string
-  verified: boolean
-}
-
-interface EnvVar {
-  id: string
-  key: string
-  value: string
-}
-
-interface Project {
-  id: string
-  name: string
-  repoUrl: string
-  createdAt: string
-  framework: string
-  buildCommand: string
-  outputDir: string
-  domains: Domain[]
-  deployments: Deployment[]
-  envVars: EnvVar[]
-}
+// Removed unused type imports
 
 export default function ProjectPage() {
   const params = useParams()
@@ -70,10 +39,11 @@ export default function ProjectPage() {
     isLoading,
     isError,
     error,
+    refetch,
   } = useProject(params.projectName as string)
 
   useEffect(() => {
-    if (isError && (error as any)?.message === "Failed to fetch project") {
+    if (isError && (error as Error)?.message === "Failed to fetch project") {
       router.push("/projects")
     }
   }, [isError, error, router])
@@ -268,7 +238,7 @@ export default function ProjectPage() {
         </TabsContent>
 
         <TabsContent value="deployments" className="mt-6">
-          <ProjectDeployments project={project} onRefresh={fetchProject} />
+          <ProjectDeployments project={project} onRefresh={refetch} />
         </TabsContent>
 
         <TabsContent value="domains" className="mt-6">
@@ -308,7 +278,7 @@ export default function ProjectPage() {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
-          <ProjectSettings project={project} onRefresh={fetchProject} />
+          <ProjectSettings project={project} onRefresh={refetch} />
         </TabsContent>
       </Tabs>
     </div>

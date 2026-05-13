@@ -37,14 +37,12 @@ export default function ProjectEnvVarsPage() {
   )
 
   const {
-    data: project,
     isError: isProjectError,
     error: projectError,
   } = useProject(projectName as string)
   const {
     data: envVars = [],
     isLoading,
-    refetch: fetchEnvVars,
   } = useEnvVars(projectName as string)
 
   const createEnvVarMutation = useCreateEnvVar()
@@ -54,7 +52,7 @@ export default function ProjectEnvVarsPage() {
   useEffect(() => {
     if (
       isProjectError &&
-      (projectError as any)?.message === "Failed to fetch project"
+      (projectError as Error)?.message === "Failed to fetch project"
     ) {
       router.push("/projects")
     }
@@ -77,12 +75,13 @@ export default function ProjectEnvVarsPage() {
   const [editValue, setEditValue] = useState("")
   const [isEditLoading, setIsEditLoading] = useState(false)
 
-  useEffect(() => {
-    if (editingVar) {
-      setEditKey(editingVar.key)
-      setEditValue(editingVar.value)
-    }
-  }, [editingVar])
+  const startEditing = (envVar: EnvVar) => {
+    setEditingVar(envVar)
+    setEditKey(envVar.key)
+    setEditValue(envVar.value)
+  }
+
+  // Removed useEffect for setting editKey and editValue
 
   const filteredVars = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -125,9 +124,10 @@ export default function ProjectEnvVarsPage() {
       setNewKey("")
       setNewValue("")
       setIsAddOpen(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Add env var error:", error)
-      toast.error(error.message || "An error occurred while adding the variable")
+      const message = error instanceof Error ? error.message : "An error occurred while adding the variable"
+      toast.error(message)
     } finally {
       setIsAddLoading(false)
     }
@@ -157,9 +157,10 @@ export default function ProjectEnvVarsPage() {
       })
       toast.success("Variable updated successfully")
       setEditingVar(null)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Update env var error:", error)
-      toast.error(error.message || "An error occurred while updating the variable")
+      const message = error instanceof Error ? error.message : "An error occurred while updating the variable"
+      toast.error(message)
     } finally {
       setIsEditLoading(false)
     }
@@ -178,9 +179,10 @@ export default function ProjectEnvVarsPage() {
         varId: envVar.id
       })
       toast.success("Variable deleted")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Delete env var error:", error)
-      toast.error(error.message || "An error occurred while deleting the variable")
+      const message = error instanceof Error ? error.message : "An error occurred while deleting the variable"
+      toast.error(message)
     }
   }
 
@@ -271,7 +273,7 @@ export default function ProjectEnvVarsPage() {
               maskedValue={MASKED_VALUE}
               revealedValues={revealedValues}
               onToggleReveal={handleToggleReveal}
-              onEdit={setEditingVar}
+              onEdit={startEditing}
               onCopy={handleCopyValue}
               onDelete={handleDeleteVar}
             />

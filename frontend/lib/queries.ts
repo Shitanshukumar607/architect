@@ -15,7 +15,7 @@ import {
   deleteProjectDomain,
   verifyProjectDomain
 } from "./api"
-import { Project, Deployment } from "./types"
+import { Project, Deployment, EnvVar } from "./types"
 
 export const USE_PROJECTS_KEY = "projects"
 export const USE_PROJECT_KEY = "project"
@@ -46,7 +46,7 @@ export function useDeployments(projectId: string) {
 }
 
 export function useEnvVars(projectName: string) {
-  return useQuery<any[]>({
+  return useQuery<EnvVar[]>({
     queryKey: [USE_ENV_VARS_KEY, projectName],
     queryFn: () => fetchProjectEnvVars(projectName),
     enabled: !!projectName,
@@ -77,7 +77,7 @@ export function useDeployProject() {
 export const USE_DEPLOYMENT_LOGS_KEY = "deploymentLogs"
 
 export function useDeploymentLogs(deploymentId: string) {
-  return useQuery<any>({
+  return useQuery<Deployment>({
     queryKey: [USE_DEPLOYMENT_LOGS_KEY, deploymentId],
     queryFn: () => fetchDeploymentLogs(deploymentId),
     enabled: !!deploymentId,

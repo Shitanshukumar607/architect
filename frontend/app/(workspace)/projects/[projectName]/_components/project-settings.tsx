@@ -14,25 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Globe, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 
-interface Domain {
-  id: string
-  hostname: string
-  verified: boolean
-}
-
-interface EnvVar {
-  id: string
-  key: string
-  value: string
-}
-
-interface Project {
-  framework: string
-  buildCommand: string
-  outputDir: string
-  domains?: Domain[]
-  envVars?: EnvVar[]
-}
+import { Project, Domain, EnvVar } from "@/lib/types"
 
 export function ProjectSettings({
   project,

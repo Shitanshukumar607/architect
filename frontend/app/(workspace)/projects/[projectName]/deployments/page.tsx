@@ -4,7 +4,6 @@ import { useParams } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { ProjectDeployments } from "../_components/project-deployments"
 import { useProject } from "@/lib/queries"
-import { Project } from "@/lib/types"
 
 export default function ProjectDeploymentsPage() {
   const params = useParams()

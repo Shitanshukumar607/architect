@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,26 +21,15 @@ import { DomainsTable } from "./_components/domains-table"
 import { DomainsEmptyState } from "./_components/domains-empty-state"
 import { DomainsAddDialog } from "./_components/domains-add-dialog"
 import { DomainsEditDialog } from "./_components/domains-edit-dialog"
-import type { Domain, Project } from "./_components/domains.types"
+import type { Domain } from "./_components/domains.types"
 
-async function getErrorMessage(response: Response, fallback: string) {
-  try {
-    const data = await response.json()
-    if (data?.error) {
-      return data.error as string
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
-}
+// Removed unused getErrorMessage function
 
 export default function ProjectDomainsPage() {
   const params = useParams()
   const {
     data: project,
     isLoading,
-    refetch: fetchProject,
   } = useProject(params.projectName as string)
 
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -50,7 +39,7 @@ export default function ProjectDomainsPage() {
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null)
   const [editHostname, setEditHostname] = useState("")
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+  // Removed unused baseUrl
 
   const { mutate: createDomain, isPending: isAddingDomain } = useCreateDomain()
   const { mutate: updateDomain, isPending: isUpdatingDomain } = useUpdateDomain()
@@ -116,11 +105,12 @@ export default function ProjectDomainsPage() {
     }
   }
 
-  useEffect(() => {
-    if (editingDomain) {
-      setEditHostname(editingDomain.hostname)
-    }
-  }, [editingDomain])
+  const startEditing = (domain: Domain) => {
+    setEditingDomain(domain)
+    setEditHostname(domain.hostname)
+  }
+
+  // Removed useEffect for setting editHostname
 
   const filteredDomains = useMemo(() => {
     const list = project?.domains ?? []
@@ -173,7 +163,7 @@ export default function ProjectDomainsPage() {
           ) : (
             <DomainsTable
               items={filteredDomains}
-              onEdit={setEditingDomain}
+              onEdit={startEditing}
               onCopy={handleCopyDomain}
             />
           )}

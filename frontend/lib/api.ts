@@ -1,7 +1,9 @@
+import { Project, Deployment, EnvVar, Domain, DeploymentLog } from "./types"
+
 const getBaseUrl = () =>
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
-export const fetchProjects = async () => {
+export const fetchProjects = async (): Promise<Project[]> => {
   const response = await fetch(`${getBaseUrl()}/api/projects`, {
     credentials: "include",
   })
@@ -9,7 +11,7 @@ export const fetchProjects = async () => {
   return response.json()
 }
 
-export const fetchProjectByName = async (projectName: string) => {
+export const fetchProjectByName = async (projectName: string): Promise<Project> => {
   const response = await fetch(
     `${getBaseUrl()}/api/projects/name/${projectName}`,
     { credentials: "include" }
@@ -18,7 +20,7 @@ export const fetchProjectByName = async (projectName: string) => {
   return response.json()
 }
 
-export const fetchProjectDeployments = async (projectId: string) => {
+export const fetchProjectDeployments = async (projectId: string): Promise<Deployment[]> => {
   const response = await fetch(
     `${getBaseUrl()}/api/deploy?projectId=${projectId}`,
     { credentials: "include" }
@@ -27,7 +29,7 @@ export const fetchProjectDeployments = async (projectId: string) => {
   return response.json()
 }
 
-export const createProject = async (data: { repoUrl: string, framework: string, buildCommand: string, outputDir: string }) => {
+export const createProject = async (data: { repoUrl: string, framework: string, buildCommand: string, outputDir: string }): Promise<Project> => {
   const response = await fetch(`${getBaseUrl()}/api/projects`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -41,7 +43,7 @@ export const createProject = async (data: { repoUrl: string, framework: string, 
   return response.json()
 }
 
-export const deployProject = async (data: { repoUrl?: string, buildCommand?: string, outputDir?: string }) => {
+export const deployProject = async (data: { repoUrl?: string, buildCommand?: string, outputDir?: string }): Promise<Deployment> => {
   const response = await fetch(`${getBaseUrl()}/api/deploy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -52,19 +54,19 @@ export const deployProject = async (data: { repoUrl?: string, buildCommand?: str
   return response.json()
 }
 
-export const fetchProjectEnvVars = async (projectName: string) => {
+export const fetchProjectEnvVars = async (projectName: string): Promise<EnvVar[]> => {
   const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}/env-vars`, { credentials: "include" })
   if (!response.ok) throw new Error("Failed to fetch env vars")
   return response.json()
 }
 
-export const fetchDeploymentLogs = async (deploymentId: string) => {
+export const fetchDeploymentLogs = async (deploymentId: string): Promise<Deployment & { logs: DeploymentLog[] }> => {
   const response = await fetch(`${getBaseUrl()}/api/deploy/${deploymentId}`, { credentials: "include" })
   if (!response.ok) throw new Error("Failed to fetch deployment logs")
   return response.json()
 }
 
-export const createProjectEnvVar = async ({ projectName, data }: { projectName: string, data: any }) => {
+export const createProjectEnvVar = async ({ projectName, data }: { projectName: string, data: { key: string, value: string } }): Promise<EnvVar> => {
   const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}/env-vars`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -75,7 +77,7 @@ export const createProjectEnvVar = async ({ projectName, data }: { projectName: 
   return response.json()
 }
 
-export const updateProjectEnvVar = async ({ projectName, varId, data }: { projectName: string, varId: string, data: any }) => {
+export const updateProjectEnvVar = async ({ projectName, varId, data }: { projectName: string, varId: string, data: { key?: string, value?: string } }): Promise<EnvVar> => {
   const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}/env-vars/${varId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -95,7 +97,7 @@ export const deleteProjectEnvVar = async ({ projectName, varId }: { projectName:
   return response.json()
 }
 
-export const createProjectDomain = async ({ projectName, hostname }: { projectName: string, hostname: string }) => {
+export const createProjectDomain = async ({ projectName, hostname }: { projectName: string, hostname: string }): Promise<Domain> => {
   const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}/domains`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -106,7 +108,7 @@ export const createProjectDomain = async ({ projectName, hostname }: { projectNa
   return response.json()
 }
 
-export const updateProjectDomain = async ({ projectName, domainId, hostname }: { projectName: string, domainId: string, hostname: string }) => {
+export const updateProjectDomain = async ({ projectName, domainId, hostname }: { projectName: string, domainId: string, hostname: string }): Promise<Domain> => {
   const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}/domains/${domainId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -126,7 +128,7 @@ export const deleteProjectDomain = async ({ projectName, domainId }: { projectNa
   return response.json()
 }
 
-export const verifyProjectDomain = async ({ projectName, domainId }: { projectName: string, domainId: string }) => {
+export const verifyProjectDomain = async ({ projectName, domainId }: { projectName: string, domainId: string }): Promise<Domain> => {
   const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}/domains/${domainId}/verify`, {
     method: "POST",
     credentials: "include",

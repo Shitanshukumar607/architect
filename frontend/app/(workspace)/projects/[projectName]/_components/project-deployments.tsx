@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+// Removed unused useState
 import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import {
@@ -33,20 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useDeployProject } from "@/lib/queries"
 
-interface Deployment {
-  id: string
-  status: string
-  createdAt: string
-  finishedAt?: string
-}
-
-interface Project {
-  name?: string
-  repoUrl?: string
-  buildCommand?: string
-  outputDir?: string
-  deployments?: Deployment[]
-}
+import { Project, Deployment } from "@/lib/types"
 
 export function ProjectDeployments({
   project,
