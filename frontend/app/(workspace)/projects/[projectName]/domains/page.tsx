@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+import { useProject, useCreateDomain, useUpdateDomain } from "@/lib/queries"
 
 import { DomainsFilters } from "./_components/domains-filters"
 import { DomainsHeader } from "./_components/domains-header"
@@ -36,76 +37,47 @@ async function getErrorMessage(response: Response, fallback: string) {
 
 export default function ProjectDomainsPage() {
   const params = useParams()
-  const [project, setProject] = useState<Project | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    data: project,
+    isLoading,
+    refetch: fetchProject,
+  } = useProject(params.projectName as string)
 
   const [isAddOpen, setIsAddOpen] = useState(false)
-  const [isAddingDomain, setIsAddingDomain] = useState(false)
   const [newDomain, setNewDomain] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
 
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null)
   const [editHostname, setEditHostname] = useState("")
-  const [isUpdatingDomain, setIsUpdatingDomain] = useState(false)
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
-  const fetchProject = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch(
-        `${baseUrl}/api/projects/name/${params.projectName}`,
-        {
-          credentials: "include",
-        }
-      )
-      if (response.ok) {
-        const data = await response.json()
-        setProject(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch project:", error)
-      toast.error("Failed to load project domains")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [baseUrl, params.projectName])
+  const { mutate: createDomain, isPending: isAddingDomain } = useCreateDomain()
+  const { mutate: updateDomain, isPending: isUpdatingDomain } = useUpdateDomain()
 
-  const handleAddDomain = async () => {
+  const handleAddDomain = () => {
     const trimmedHostname = newDomain.trim()
     if (!trimmedHostname) {
       toast.error("Hostname is required")
       return
     }
 
-    try {
-      setIsAddingDomain(true)
-      const response = await fetch(
-        `${baseUrl}/api/projects/name/${params.projectName}/domains`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hostname: trimmedHostname }),
-          credentials: "include",
-        }
-      )
-
-      if (response.ok) {
-        toast.success("Domain added successfully")
-        setNewDomain("")
-        setIsAddOpen(false)
-        fetchProject()
-      } else {
-        toast.error(await getErrorMessage(response, "Failed to add domain"))
+    createDomain(
+      { projectName: params.projectName as string, hostname: trimmedHostname },
+      {
+        onSuccess: () => {
+          toast.success("Domain added successfully")
+          setNewDomain("")
+          setIsAddOpen(false)
+        },
+        onError: (error) => {
+          toast.error(error.message || "An error occurred while adding the domain")
+        },
       }
-    } catch {
-      toast.error("An error occurred while adding the domain")
-    } finally {
-      setIsAddingDomain(false)
-    }
+    )
   }
 
-  const handleUpdateDomain = async () => {
+  const handleUpdateDomain = () => {
     if (!editingDomain) return
     const trimmedHostname = editHostname.trim()
 
@@ -119,31 +91,19 @@ export default function ProjectDomainsPage() {
       return
     }
 
-    try {
-      setIsUpdatingDomain(true)
-      const response = await fetch(
-        `${baseUrl}/api/projects/name/${params.projectName}/domains/${editingDomain.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hostname: trimmedHostname }),
-          credentials: "include",
-        }
-      )
-
-      if (response.ok) {
-        toast.success("Domain updated successfully")
-        setEditingDomain(null)
-        setEditHostname("")
-        fetchProject()
-      } else {
-        toast.error(await getErrorMessage(response, "Failed to update domain"))
+    updateDomain(
+      { projectName: params.projectName as string, domainId: editingDomain.id, hostname: trimmedHostname },
+      {
+        onSuccess: () => {
+          toast.success("Domain updated successfully")
+          setEditingDomain(null)
+          setEditHostname("")
+        },
+        onError: (error) => {
+          toast.error(error.message || "An error occurred while updating the domain")
+        },
       }
-    } catch {
-      toast.error("An error occurred while updating the domain")
-    } finally {
-      setIsUpdatingDomain(false)
-    }
+    )
   }
 
   const handleCopyDomain = async (hostname: string) => {
@@ -155,12 +115,6 @@ export default function ProjectDomainsPage() {
       toast.error("Failed to copy domain")
     }
   }
-
-  useEffect(() => {
-    if (params.projectName) {
-      fetchProject()
-    }
-  }, [params.projectName, fetchProject])
 
   useEffect(() => {
     if (editingDomain) {
@@ -256,8 +210,10 @@ export default function ProjectDomainsPage() {
                     {index + 1}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold leading-none">{step.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-sm leading-none font-semibold">
+                      {step.title}
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
                       {step.description}
                     </p>
                   </div>

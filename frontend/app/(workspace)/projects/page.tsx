@@ -16,46 +16,14 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { CreateProjectDialog } from "./_components/create-project-dialog"
-
-interface Project {
-  id: string
-  name: string
-  repoUrl: string
-  createdAt: string
-  framework: string
-  buildCommand: string
-  outputDir: string
-  domains?: { hostname: string }[]
-}
+import { useProjects } from "@/lib/queries"
+import { Project } from "@/lib/types"
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: projects = [], isLoading, refetch } = useProjects()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-
-  const fetchProjects = async () => {
-    try {
-      setIsLoading(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects`, {
-        credentials: "include",
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setProjects(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchProjects()
-  }, [])
 
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-8 p-4 duration-500 fade-in md:p-8">
@@ -80,7 +48,7 @@ export default function ProjectsPage() {
       <CreateProjectDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onProjectCreated={fetchProjects}
+        onProjectCreated={() => refetch()}
       />
 
       {isLoading ? (

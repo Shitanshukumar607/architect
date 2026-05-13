@@ -1,9 +1,10 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link2, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
+import { useProject, useEnvVars, useCreateEnvVar, useUpdateEnvVar, useDeleteEnvVar } from "@/lib/queries"
 
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -26,17 +27,7 @@ function getProjectName(
   return Array.isArray(value) ? value[0] : value
 }
 
-async function getErrorMessage(response: Response, fallback: string) {
-  try {
-    const data = await response.json()
-    if (data?.error) {
-      return data.error as string
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
-}
+
 
 export default function ProjectEnvVarsPage() {
   const params = useParams()
@@ -45,8 +36,29 @@ export default function ProjectEnvVarsPage() {
     params.projectName as string | string[] | undefined
   )
 
-  const [envVars, setEnvVars] = useState<EnvVar[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    data: project,
+    isError: isProjectError,
+    error: projectError,
+  } = useProject(projectName as string)
+  const {
+    data: envVars = [],
+    isLoading,
+    refetch: fetchEnvVars,
+  } = useEnvVars(projectName as string)
+
+  const createEnvVarMutation = useCreateEnvVar()
+  const updateEnvVarMutation = useUpdateEnvVar()
+  const deleteEnvVarMutation = useDeleteEnvVar()
+
+  useEffect(() => {
+    if (
+      isProjectError &&
+      (projectError as any)?.message === "Failed to fetch project"
+    ) {
+      router.push("/projects")
+    }
+  }, [isProjectError, projectError, router])
 
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("updated")
@@ -64,63 +76,6 @@ export default function ProjectEnvVarsPage() {
   const [editKey, setEditKey] = useState("")
   const [editValue, setEditValue] = useState("")
   const [isEditLoading, setIsEditLoading] = useState(false)
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-
-  const fetchProject = useCallback(async () => {
-    if (!projectName) return
-    const response = await fetch(
-      `${baseUrl}/api/projects/name/${projectName}`,
-      {
-        credentials: "include",
-      }
-    )
-
-    if (response.ok) {
-      return
-    }
-
-    if (response.status === 404) {
-      router.push("/projects")
-      return
-    }
-
-    toast.error(await getErrorMessage(response, "Failed to load project"))
-  }, [baseUrl, projectName, router])
-
-  const fetchEnvVars = useCallback(async () => {
-    if (!projectName) return
-    const response = await fetch(
-      `${baseUrl}/api/projects/name/${projectName}/env-vars`,
-      {
-        credentials: "include",
-      }
-    )
-
-    if (response.ok) {
-      const data = await response.json()
-      setEnvVars(data)
-      return
-    }
-
-    toast.error(await getErrorMessage(response, "Failed to load variables"))
-  }, [baseUrl, projectName])
-
-  const loadData = useCallback(async () => {
-    if (!projectName) return
-    setIsLoading(true)
-    try {
-      await Promise.all([fetchProject(), fetchEnvVars()])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [projectName, fetchProject, fetchEnvVars])
-
-  useEffect(() => {
-    if (projectName) {
-      loadData()
-    }
-  }, [projectName, loadData])
 
   useEffect(() => {
     if (editingVar) {
@@ -162,28 +117,17 @@ export default function ProjectEnvVarsPage() {
 
     setIsAddLoading(true)
     try {
-      const response = await fetch(
-        `${baseUrl}/api/projects/name/${projectName}/env-vars`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: trimmedKey, value: trimmedValue }),
-          credentials: "include",
-        }
-      )
-
-      if (response.ok) {
-        toast.success("Variable added successfully")
-        setNewKey("")
-        setNewValue("")
-        setIsAddOpen(false)
-        await fetchEnvVars()
-      } else {
-        toast.error(await getErrorMessage(response, "Failed to add variable"))
-      }
-    } catch (error) {
+      await createEnvVarMutation.mutateAsync({
+        projectName: projectName as string,
+        data: { key: trimmedKey, value: trimmedValue }
+      })
+      toast.success("Variable added successfully")
+      setNewKey("")
+      setNewValue("")
+      setIsAddOpen(false)
+    } catch (error: any) {
       console.error("Add env var error:", error)
-      toast.error("An error occurred while adding the variable")
+      toast.error(error.message || "An error occurred while adding the variable")
     } finally {
       setIsAddLoading(false)
     }
@@ -206,28 +150,16 @@ export default function ProjectEnvVarsPage() {
 
     setIsEditLoading(true)
     try {
-      const response = await fetch(
-        `${baseUrl}/api/projects/name/${projectName}/env-vars/${editingVar.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: trimmedKey, value: trimmedValue }),
-          credentials: "include",
-        }
-      )
-
-      if (response.ok) {
-        toast.success("Variable updated successfully")
-        setEditingVar(null)
-        await fetchEnvVars()
-      } else {
-        toast.error(
-          await getErrorMessage(response, "Failed to update variable")
-        )
-      }
-    } catch (error) {
+      await updateEnvVarMutation.mutateAsync({
+        projectName: projectName as string,
+        varId: editingVar.id,
+        data: { key: trimmedKey, value: trimmedValue }
+      })
+      toast.success("Variable updated successfully")
+      setEditingVar(null)
+    } catch (error: any) {
       console.error("Update env var error:", error)
-      toast.error("An error occurred while updating the variable")
+      toast.error(error.message || "An error occurred while updating the variable")
     } finally {
       setIsEditLoading(false)
     }
@@ -241,24 +173,14 @@ export default function ProjectEnvVarsPage() {
     if (!confirmed) return
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/projects/name/${projectName}/env-vars/${envVar.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      )
-
-      if (response.ok) {
-        toast.success("Variable deleted")
-        setEnvVars((prev) => prev.filter((item) => item.id !== envVar.id))
-        return
-      }
-
-      toast.error(await getErrorMessage(response, "Failed to delete variable"))
-    } catch (error) {
+      await deleteEnvVarMutation.mutateAsync({
+        projectName: projectName as string,
+        varId: envVar.id
+      })
+      toast.success("Variable deleted")
+    } catch (error: any) {
       console.error("Delete env var error:", error)
-      toast.error("An error occurred while deleting the variable")
+      toast.error(error.message || "An error occurred while deleting the variable")
     }
   }
 

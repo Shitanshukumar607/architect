@@ -4,51 +4,17 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  ChevronRight,
-  FolderGit2,
-  Globe,
-  Loader2,
-  Search,
-} from "lucide-react"
+import { ChevronRight, FolderGit2, Globe, Loader2, Search } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-
-interface Project {
-  id: string
-  name: string
-  repoUrl: string
-  framework: string
-}
+import { useState } from "react"
+import { useProjects } from "@/lib/queries"
+import { Project } from "@/lib/types"
 
 export default function DomainsPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: projects = [], isLoading } = useProjects()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const fetchProjects = async () => {
-    try {
-      setIsLoading(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects`, {
-        credentials: "include",
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setProjects(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchProjects()
-  }, [])
-
-  const filteredProjects = projects.filter((project) =>
+  const filteredProjects = projects.filter((project: Project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 

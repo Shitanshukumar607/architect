@@ -3,7 +3,18 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
-import { GitBranch, Loader2, PlayCircle, RefreshCw, CheckCircle2, XCircle, Clock, MoreHorizontal, ExternalLink, Rocket } from "lucide-react"
+import {
+  GitBranch,
+  Loader2,
+  PlayCircle,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MoreHorizontal,
+  ExternalLink,
+  Rocket,
+} from "lucide-react"
 import Link from "next/link"
 import {
   Table,
@@ -20,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { useDeployProject } from "@/lib/queries"
 
 interface Deployment {
   id: string
@@ -43,70 +55,70 @@ export function ProjectDeployments({
   project: Project
   onRefresh: () => void
 }) {
-  const [isDeploying, setIsDeploying] = useState(false)
+  const { mutate: deploy, isPending: isDeploying } = useDeployProject()
 
-  const handleRedeploy = async () => {
-    try {
-      setIsDeploying(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/deploy`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          repoUrl: project.repoUrl,
-          buildCommand: project.buildCommand,
-          outputDir: project.outputDir,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to redeploy")
+  const handleRedeploy = () => {
+    deploy(
+      {
+        repoUrl: project.repoUrl,
+        buildCommand: project.buildCommand,
+        outputDir: project.outputDir,
+      },
+      {
+        onSuccess: () => onRefresh(),
+        onError: (error) => console.error("Failed to redeploy:", error),
       }
-
-      onRefresh()
-    } catch (error) {
-      console.error("Failed to redeploy:", error)
-    } finally {
-      setIsDeploying(false)
-    }
+    )
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'SUCCESS': 
+      case "SUCCESS":
         return (
-          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 gap-1.5 py-0.5 px-2 font-medium">
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400"
+          >
             <CheckCircle2 className="h-3.5 w-3.5" />
             Ready
           </Badge>
         )
-      case 'FAILED': 
+      case "FAILED":
         return (
-          <Badge variant="outline" className="bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 gap-1.5 py-0.5 px-2 font-medium">
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-red-500/20 bg-red-500/10 px-2 py-0.5 font-medium text-red-600 dark:text-red-400"
+          >
             <XCircle className="h-3.5 w-3.5" />
             Error
           </Badge>
         )
-      case 'BUILDING': 
+      case "BUILDING":
         return (
-          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 gap-1.5 py-0.5 px-2 font-medium">
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-blue-500/20 bg-blue-500/10 px-2 py-0.5 font-medium text-blue-600 dark:text-blue-400"
+          >
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Building
           </Badge>
         )
-      case 'QUEUED': 
+      case "QUEUED":
         return (
-          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20 gap-1.5 py-0.5 px-2 font-medium">
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 font-medium text-yellow-600 dark:text-yellow-400"
+          >
             <Clock className="h-3.5 w-3.5" />
             Queued
           </Badge>
         )
-      default: 
+      default:
         return (
-          <Badge variant="outline" className="bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20 gap-1.5 py-0.5 px-2 font-medium">
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-gray-500/20 bg-gray-500/10 px-2 py-0.5 font-medium text-gray-600 dark:text-gray-400"
+          >
             <Clock className="h-3.5 w-3.5" />
             Unknown
           </Badge>
@@ -115,11 +127,13 @@ export function ProjectDeployments({
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+    <div className="flex animate-in flex-col gap-6 duration-500 fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Deployment History</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Deployment History
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             View and monitor all previous deployments for this project.
           </p>
         </div>
@@ -128,9 +142,13 @@ export function ProjectDeployments({
             size="sm"
             onClick={handleRedeploy}
             disabled={isDeploying || !project.repoUrl}
-            className="gap-2 transition-all shadow-sm"
+            className="gap-2 shadow-sm transition-all"
           >
-            {isDeploying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+            {isDeploying ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Rocket className="h-4 w-4" />
+            )}
             Redeploy
           </Button>
           <Button
@@ -149,19 +167,19 @@ export function ProjectDeployments({
         <Table>
           <TableHeader className="bg-muted/30">
             <TableRow>
-              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Deployment
               </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Status
               </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Branch
               </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Environment
               </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Created
               </TableHead>
               <TableHead className="w-[56px] px-4 py-3 text-xs font-semibold text-muted-foreground" />
@@ -170,12 +188,14 @@ export function ProjectDeployments({
           <TableBody>
             {project.deployments?.map((deployment: Deployment) => {
               const createdAt = deployment.createdAt
-              const createdLabel = formatDistanceToNow(new Date(createdAt), { addSuffix: true })
+              const createdLabel = formatDistanceToNow(new Date(createdAt), {
+                addSuffix: true,
+              })
 
               return (
                 <TableRow
                   key={deployment.id}
-                  className="transition-colors hover:bg-muted/10 group"
+                  className="group transition-colors hover:bg-muted/10"
                 >
                   <TableCell className="px-4 py-3">
                     <div className="flex flex-col gap-1">
@@ -203,7 +223,16 @@ export function ProjectDeployments({
                       <span>{createdLabel}</span>
                       {deployment.finishedAt && (
                         <span className="text-xs opacity-70">
-                          in {Math.max(1, Math.round((new Date(deployment.finishedAt).getTime() - new Date(deployment.createdAt).getTime()) / 1000))}s
+                          in{" "}
+                          {Math.max(
+                            1,
+                            Math.round(
+                              (new Date(deployment.finishedAt).getTime() -
+                                new Date(deployment.createdAt).getTime()) /
+                                1000
+                            )
+                          )}
+                          s
                         </span>
                       )}
                     </div>
@@ -217,13 +246,19 @@ export function ProjectDeployments({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/projects/${project.name || "project"}/deployments/${deployment.id}`} className="gap-2 cursor-pointer">
+                          <Link
+                            href={`/projects/${project.name || "project"}/deployments/${deployment.id}`}
+                            className="cursor-pointer gap-2"
+                          >
                             <PlayCircle className="h-4 w-4" />
                             View Logs
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/projects/${project.name || "project"}`} className="gap-2 cursor-pointer">
+                          <Link
+                            href={`/projects/${project.name || "project"}`}
+                            className="cursor-pointer gap-2"
+                          >
                             <ExternalLink className="h-4 w-4" />
                             View Project
                           </Link>
@@ -236,7 +271,10 @@ export function ProjectDeployments({
             })}
             {(!project.deployments || project.deployments.length === 0) && (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="h-32 text-center text-muted-foreground"
+                >
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <p>No deployments found for this project.</p>

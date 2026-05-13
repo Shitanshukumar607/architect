@@ -1,12 +1,13 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect } from "react"
 import { ArrowLeft, Loader2, PlayCircle, Clock, GitBranch } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDistanceToNow, format } from "date-fns"
+import { useDeploymentLogs } from "@/lib/queries"
 
 interface DeploymentLog {
   id: string
@@ -28,51 +29,22 @@ interface Deployment {
 export default function DeploymentLogsPage() {
   const params = useParams()
   const router = useRouter()
-  const [deployment, setDeployment] = useState<Deployment | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
-  const fetchDeployment = useCallback(async () => {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(
-        `${baseUrl}/api/deploy/${params.deploymentId}`,
-        {
-          credentials: "include",
-        }
-      )
-      if (response.ok) {
-        const data = await response.json()
-        setDeployment(data)
-      } else {
-        router.push(`/projects/${params.projectName}/deployments`)
-      }
-    } catch (error) {
-      console.error("Failed to fetch deployment logs:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [params.deploymentId, params.projectName, router])
+  const {
+    data: deployment,
+    isLoading,
+    isError,
+    error,
+  } = useDeploymentLogs(params.deploymentId as string)
 
   useEffect(() => {
-    if (params.deploymentId) {
-      fetchDeployment()
-
-      // Setup polling if deployment is in progress
-      const interval = setInterval(() => {
-        setDeployment((prev) => {
-          if (
-            prev &&
-            (prev.status === "QUEUED" || prev.status === "BUILDING")
-          ) {
-            fetchDeployment()
-          }
-          return prev
-        })
-      }, 3000)
-
-      return () => clearInterval(interval)
+    if (
+      isError &&
+      (error as any)?.message === "Failed to fetch deployment logs"
+    ) {
+      router.push(`/projects/${params.projectName}/deployments`)
     }
-  }, [params.deploymentId, fetchDeployment])
+  }, [isError, error, params.projectName, router])
 
   if (isLoading && !deployment) {
     return (
@@ -124,7 +96,7 @@ export default function DeploymentLogsPage() {
           <CardContent className="flex-1 bg-black p-0">
             <div className="h-[600px] overflow-y-auto p-4 font-mono text-sm text-gray-300">
               {deployment.logs && deployment.logs.length > 0 ? (
-                deployment.logs.map((log) => (
+                deployment.logs.map((log: DeploymentLog) => (
                   <div
                     key={log.id}
                     className="flex gap-4 rounded px-2 py-0.5 hover:bg-white/5"

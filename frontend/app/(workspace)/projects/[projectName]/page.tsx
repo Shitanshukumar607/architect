@@ -23,9 +23,10 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect } from "react"
 import { ProjectDeployments } from "./_components/project-deployments"
 import { ProjectSettings } from "./_components/project-settings"
+import { useProject } from "@/lib/queries"
 
 interface Deployment {
   id: string
@@ -63,34 +64,19 @@ interface Project {
 export default function ProjectPage() {
   const params = useParams()
   const router = useRouter()
-  const [project, setProject] = useState<Project | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProject = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects/name/${params.projectName}`, {
-        credentials: "include",
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setProject(data)
-      } else if (response.status === 404) {
-        router.push("/projects")
-      }
-    } catch (error) {
-      console.error("Failed to fetch project:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [params.projectName, router])
+  const {
+    data: project,
+    isLoading,
+    isError,
+    error,
+  } = useProject(params.projectName as string)
 
   useEffect(() => {
-    if (params.projectName) {
-      fetchProject()
+    if (isError && (error as any)?.message === "Failed to fetch project") {
+      router.push("/projects")
     }
-  }, [params.projectName, fetchProject])
+  }, [isError, error, router])
 
   if (isLoading) {
     return (
@@ -286,29 +272,39 @@ export default function ProjectPage() {
         </TabsContent>
 
         <TabsContent value="domains" className="mt-6">
-           <Card className="border-dashed bg-background/50">
+          <Card className="border-dashed bg-background/50">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <Globe className="h-8 w-8 text-primary mb-4" />
+              <Globe className="mb-4 h-8 w-8 text-primary" />
               <h3 className="text-lg font-semibold">Manage Domains</h3>
-              <p className="text-muted-foreground mb-4">View and configure domains for this project.</p>
+              <p className="mb-4 text-muted-foreground">
+                View and configure domains for this project.
+              </p>
               <Button asChild variant="outline">
-                <Link href={`/projects/${params.projectName}/domains`}>Go to Domains Page</Link>
+                <Link href={`/projects/${params.projectName}/domains`}>
+                  Go to Domains Page
+                </Link>
               </Button>
             </CardContent>
-           </Card>
+          </Card>
         </TabsContent>
 
         <TabsContent value="env-vars" className="mt-6">
-           <Card className="border-dashed bg-background/50">
+          <Card className="border-dashed bg-background/50">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <Terminal className="h-8 w-8 text-primary mb-4" />
+              <Terminal className="mb-4 h-8 w-8 text-primary" />
               <h3 className="text-lg font-semibold">Environment Variables</h3>
-              <p className="text-muted-foreground mb-4">Configure variables for your application.</p>
+              <p className="mb-4 text-muted-foreground">
+                Configure variables for your application.
+              </p>
               <Button asChild variant="outline">
-                <Link href={`/projects/${params.projectName}/environment-variables`}>Go to Env Vars Page</Link>
+                <Link
+                  href={`/projects/${params.projectName}/environment-variables`}
+                >
+                  Go to Env Vars Page
+                </Link>
               </Button>
             </CardContent>
-           </Card>
+          </Card>
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">

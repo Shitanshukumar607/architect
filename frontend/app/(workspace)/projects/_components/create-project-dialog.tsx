@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useCreateProject } from "@/lib/queries"
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -25,10 +26,15 @@ interface CreateProjectDialogProps {
   onProjectCreated: () => void
 }
 
-export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: CreateProjectDialogProps) {
-  const [isLoading, setIsLoading] = useState(false)
+export function CreateProjectDialog({
+  open,
+  onOpenChange,
+  onProjectCreated,
+}: CreateProjectDialogProps) {
   const [error, setError] = useState<string | null>(null)
-  
+
+  const { mutate: createProject, isPending: isLoading } = useCreateProject()
+
   const [formData, setFormData] = useState({
     repoUrl: "https://github.com/Shitanshukumar607/frontend-test",
     framework: "VITE",
@@ -37,44 +43,29 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
   })
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setIsLoading(true)
 
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to create project")
-      }
-
-      onProjectCreated()
-      onOpenChange(false)
-      // Reset form
-      setFormData({
-        repoUrl: "",
-        framework: "VITE",
-        buildCommand: "npm run build",
-        outputDir: "dist",
-      })
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsLoading(false)
-    }
+    createProject(formData, {
+      onSuccess: () => {
+        onProjectCreated()
+        onOpenChange(false)
+        // Reset form
+        setFormData({
+          repoUrl: "",
+          framework: "VITE",
+          buildCommand: "npm run build",
+          outputDir: "dist",
+        })
+      },
+      onError: (err) => {
+        setError(err.message || "An error occurred")
+      },
+    })
   }
 
   return (
@@ -90,17 +81,15 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
 
           <div className="grid gap-6 py-6">
             {error && (
-              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
-            
 
             <div className="grid gap-2">
-
               <Label htmlFor="repoUrl">Repository URL</Label>
               <div className="relative">
-                <GitBranch className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <GitBranch className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="repoUrl"
                   placeholder="https://github.com/username/repo"
@@ -114,7 +103,10 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
 
             <div className="grid gap-2">
               <Label htmlFor="framework">Framework Preset</Label>
-              <Select value={formData.framework} onValueChange={(v) => handleChange("framework", v)}>
+              <Select
+                value={formData.framework}
+                onValueChange={(v) => handleChange("framework", v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a framework" />
                 </SelectTrigger>
@@ -148,7 +140,11 @@ export function CreateProjectDialog({ open, onOpenChange, onProjectCreated }: Cr
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

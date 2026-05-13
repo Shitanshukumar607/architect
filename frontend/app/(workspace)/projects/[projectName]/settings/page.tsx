@@ -1,47 +1,14 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { fetchProjects } from "@/lib/api"
+import { useProject } from "@/lib/queries"
 import { Loader2 } from "lucide-react"
+import { useParams } from "next/navigation"
 import { ProjectSettings } from "../_components/project-settings"
-
-interface Project {
-  id: string
-  name: string
-  repoUrl: string
-  framework: string
-  buildCommand: string
-  outputDir: string
-}
 
 export default function ProjectSettingsPage() {
   const params = useParams()
-  const [project, setProject] = useState<Project | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  const fetchProject = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects/name/${params.projectName}`, {
-        credentials: "include",
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setProject(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch project:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [params.projectName])
-
-  useEffect(() => {
-    if (params.projectName) {
-      fetchProject()
-    }
-  }, [params.projectName, fetchProject])
+  const { data: project, isLoading } = useProject(params.projectName as string)
 
   if (isLoading) {
     return (
@@ -58,10 +25,11 @@ export default function ProjectSettingsPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold tracking-tight">Project Settings</h1>
         <p className="text-lg text-muted-foreground">
-          Manage settings for <span className="font-semibold text-foreground">{project.name}</span>
+          Manage settings for{" "}
+          <span className="font-semibold text-foreground">{project.name}</span>
         </p>
       </div>
-      <ProjectSettings project={project} onRefresh={fetchProject} />
+      <ProjectSettings project={project} onRefresh={fetchProjects} />
     </div>
   )
 }

@@ -12,43 +12,15 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-
-interface Project {
-  id: string
-  name: string
-  repoUrl: string
-  framework: string
-}
+import { useState } from "react"
+import { useProjects } from "@/lib/queries"
+import { Project } from "@/lib/types"
 
 export default function EnvVarsPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: projects = [], isLoading } = useProjects()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const fetchProjects = async () => {
-    try {
-      setIsLoading(true)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/projects`, {
-        credentials: "include",
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setProjects(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchProjects()
-  }, [])
-
-  const filteredProjects = projects.filter((project) =>
+  const filteredProjects = projects.filter((project: Project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
