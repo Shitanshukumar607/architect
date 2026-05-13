@@ -7,8 +7,14 @@ export async function pop() {
     orderBy: { createdAt: "asc" },
   });
 
-  if (job) {
-    return job;
+  if (!job) {
+    return undefined;
   }
-  return undefined;
+
+  const updatedJob = await prisma.deployment.update({
+    where: { id: job.id, status: DeploymentStatus.QUEUED },
+    data: { status: DeploymentStatus.BUILDING },
+  }).catch(() => null);
+
+  return updatedJob || undefined;
 }

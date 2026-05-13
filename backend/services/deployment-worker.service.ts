@@ -102,11 +102,16 @@ async function processDeploymentJob(job: Deployment) {
 
 async function processJobs() {
   while (true) {
-    const job = await pop();
-    if (job) {
-      await processDeploymentJob(job);
-    } else {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const job = await pop();
+      if (job) {
+        await processDeploymentJob(job);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      console.error("[Worker] Error in processJobs loop:", error);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 }
