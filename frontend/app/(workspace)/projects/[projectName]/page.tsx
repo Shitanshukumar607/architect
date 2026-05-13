@@ -27,6 +27,7 @@ import { useEffect } from "react"
 import { ProjectDeployments } from "./_components/project-deployments"
 import { ProjectSettings } from "./_components/project-settings"
 import { useProject } from "@/lib/queries"
+import { getDomain } from "@/lib/utils"
 
 // Removed unused type imports
 
@@ -113,7 +114,7 @@ export default function ProjectPage() {
           {project.domains?.[0] && (
             <Button asChild variant="outline" className="gap-2">
               <a
-                href={`http://${project.domains[0].hostname}`}
+                href={`https://${getDomain(project.domains[0].hostname)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -168,9 +169,20 @@ export default function ProjectPage() {
                     <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">
-                            {project.domains?.[0]?.hostname || "Not assigned"}
-                          </span>
+                          {project.domains?.[0]?.hostname ? (
+                            <a
+                              href={`https://${getDomain(project.domains[0].hostname)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-foreground hover:text-primary transition-colors hover:underline"
+                            >
+                              {getDomain(project.domains[0].hostname)}
+                            </a>
+                          ) : (
+                            <span className="font-semibold text-muted-foreground">
+                              Not assigned
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
@@ -220,9 +232,14 @@ export default function ProjectPage() {
                     >
                       <div className="flex items-center gap-2">
                         <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          {domain.hostname}
-                        </span>
+                        <a
+                          href={`https://${getDomain(domain.hostname)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium hover:text-primary transition-colors hover:underline"
+                        >
+                          {getDomain(domain.hostname)}
+                        </a>
                       </div>
                       {domain.verified && (
                         <Badge variant="secondary" className="text-xs">

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Globe, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
+import { getDomain } from "@/lib/utils"
 
 import { Project, Domain, EnvVar } from "@/lib/types"
 
@@ -138,8 +139,15 @@ export function ProjectSettings({
                       <div className="flex items-center gap-3">
                         <Globe className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <div className="flex items-center gap-2 font-semibold">
-                            {domain.hostname}
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`https://${getDomain(domain.hostname)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold hover:text-primary transition-colors hover:underline"
+                            >
+                              {getDomain(domain.hostname)}
+                            </a>
                             <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
                               {domain.verified ? "Valid" : "Pending"}
                             </span>

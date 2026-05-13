@@ -19,6 +19,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { CreateProjectDialog } from "./_components/create-project-dialog"
 import { useProjects } from "@/lib/queries"
+import { getDomain } from "@/lib/utils"
 
 export default function ProjectsPage() {
   const { data: projects = [], isLoading, refetch } = useProjects()
@@ -102,13 +103,13 @@ export default function ProjectsPage() {
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                   {project.domains && project.domains.length > 0 && (
                     <a
-                      href={`http://${project.domains[0].hostname}`}
+                      href={`https://${getDomain(project.domains[0].hostname)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="relative z-10 flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-foreground hover:underline"
                     >
                       <Globe className="h-4 w-4" />
-                      <span>{project.domains[0].hostname}</span>
+                      <span>{getDomain(project.domains[0].hostname)}</span>
                     </a>
                   )}
 

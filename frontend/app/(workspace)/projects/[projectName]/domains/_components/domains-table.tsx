@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { getDomain } from "@/lib/utils"
 
 interface Domain {
   id: string
@@ -64,7 +65,14 @@ export function DomainsTable({ items, onEdit, onCopy }: DomainsTableProps) {
                 className="transition-colors hover:bg-muted/10 group"
               >
                 <TableCell className="px-4 py-3 font-medium">
-                  {domain.hostname}
+                  <a
+                    href={`https://${getDomain(domain.hostname)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors hover:underline"
+                  >
+                    {getDomain(domain.hostname)}
+                  </a>
                 </TableCell>
                 <TableCell className="px-4 py-3">
                   <Badge
@@ -97,7 +105,7 @@ export function DomainsTable({ items, onEdit, onCopy }: DomainsTableProps) {
                         className="gap-2"
                       >
                         <Copy className="h-4 w-4" />
-                        Copy hostname
+                        Copy domain
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

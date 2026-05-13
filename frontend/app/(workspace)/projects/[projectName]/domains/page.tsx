@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { useProject, useCreateDomain, useUpdateDomain } from "@/lib/queries"
+import { getDomain } from "@/lib/utils"
 
 import { DomainsFilters } from "./_components/domains-filters"
 import { DomainsHeader } from "./_components/domains-header"
@@ -97,7 +98,7 @@ export default function ProjectDomainsPage() {
 
   const handleCopyDomain = async (hostname: string) => {
     try {
-      await navigator.clipboard.writeText(hostname)
+      await navigator.clipboard.writeText(getDomain(hostname))
       toast.success("Domain copied to clipboard")
     } catch (error) {
       console.error("Copy domain error:", error)

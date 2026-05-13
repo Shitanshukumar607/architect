@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getDomain } from "@/lib/utils"
 
 interface DomainsAddDialogProps {
   open: boolean
@@ -53,6 +54,11 @@ export function DomainsAddDialog({
             <p className="text-xs text-muted-foreground">
               Use a root domain or subdomain you control.
             </p>
+            {newDomain && !newDomain.includes(".") && (
+              <p className="text-xs font-medium text-emerald-500">
+                Will be available at: {getDomain(newDomain)}
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>

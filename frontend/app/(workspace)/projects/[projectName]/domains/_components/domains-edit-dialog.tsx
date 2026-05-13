@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getDomain } from "@/lib/utils"
 
 interface DomainsEditDialogProps {
   open: boolean
@@ -53,6 +54,11 @@ export function DomainsEditDialog({
             <p className="text-xs text-muted-foreground">
               Changing the hostname may require a new DNS verification.
             </p>
+            {editHostname && !editHostname.includes(".") && (
+              <p className="text-xs font-medium text-emerald-500">
+                Will be available at: {getDomain(editHostname)}
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>
