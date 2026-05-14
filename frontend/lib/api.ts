@@ -20,6 +20,23 @@ export const fetchProjectByName = async (projectName: string): Promise<Project> 
   return response.json()
 }
 
+export const updateProject = async (
+  projectName: string,
+  data: Partial<Project>
+): Promise<Project> => {
+  const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || "Failed to update project")
+  }
+  return response.json()
+}
+
 export const fetchProjectDeployments = async (projectId: string): Promise<Deployment[]> => {
   const response = await fetch(
     `${getBaseUrl()}/api/deploy?projectId=${projectId}`,

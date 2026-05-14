@@ -35,6 +35,9 @@ export interface Project {
   id: string
   name: string
   repoUrl: string
+  branch: string
+  rootDirectory: string
+  autoDeploy: boolean
   createdAt: string
   framework: string
   buildCommand: string

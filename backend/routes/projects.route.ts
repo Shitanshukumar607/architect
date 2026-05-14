@@ -4,6 +4,7 @@ import {
   getProjectsController,
   getProjectByIdController,
   getProjectByNameController,
+  updateProjectController,
   addProjectDomainController,
   addProjectEnvVarController,
   deleteProjectEnvVarController,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get("/", requireAuth, getProjectsController);
 router.post("/", requireAuth, createProjectController);
 router.get("/name/:name", requireAuth, getProjectByNameController);
+router.put("/name/:name", requireAuth, updateProjectController);
 router.get("/name/:name/env-vars", requireAuth, getProjectEnvVarsController);
 router.post("/name/:name/domains", requireAuth, addProjectDomainController);
 router.put(

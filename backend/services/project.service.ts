@@ -10,6 +10,7 @@ import {
   getProjectByNameForUser,
   listProjectEnvVarsByProjectId,
   listProjectsByUser,
+  updateProjectById,
   updateProjectDomainById,
   updateProjectEnvVarById,
 } from "../models/projectModel";
@@ -104,6 +105,95 @@ export async function createProjectForUser(
       }
 
       throw new ServiceError("A project with these details already exists", 400);
+    }
+    throw error;
+  }
+}
+
+type UpdateProjectPayload = {
+  name?: unknown;
+  branch?: unknown;
+  rootDirectory?: unknown;
+  autoDeploy?: unknown;
+  buildCommand?: unknown;
+  outputDir?: unknown;
+  framework?: unknown;
+};
+
+export async function updateProject(
+  userId: string,
+  projectName: string,
+  payload: UpdateProjectPayload,
+) {
+  const project = await getProjectByName(userId, projectName);
+
+  const {
+    name,
+    branch,
+    rootDirectory,
+    autoDeploy,
+    buildCommand,
+    outputDir,
+    framework,
+  } = payload;
+
+  const data: any = {};
+
+  if (name !== undefined) {
+    if (typeof name !== "string" || name.trim().length === 0) {
+      throw new ServiceError("Project name must be a non-empty string", 400);
+    }
+    data.name = normalizeProjectName(name.trim());
+  }
+
+  if (branch !== undefined) {
+    if (typeof branch !== "string" || branch.trim().length === 0) {
+      throw new ServiceError("Branch must be a non-empty string", 400);
+    }
+    data.branch = branch.trim();
+  }
+
+  if (rootDirectory !== undefined) {
+    if (typeof rootDirectory !== "string") {
+      throw new ServiceError("Root directory must be a string", 400);
+    }
+    data.rootDirectory = rootDirectory.trim() || "/";
+  }
+
+  if (autoDeploy !== undefined) {
+    if (typeof autoDeploy !== "boolean") {
+      throw new ServiceError("Auto deploy must be a boolean", 400);
+    }
+    data.autoDeploy = autoDeploy;
+  }
+
+  if (buildCommand !== undefined) {
+    if (typeof buildCommand !== "string") {
+      throw new ServiceError("Build command must be a string", 400);
+    }
+    data.buildCommand = buildCommand.trim();
+  }
+
+  if (outputDir !== undefined) {
+    if (typeof outputDir !== "string" || outputDir.trim().length === 0) {
+      throw new ServiceError("Output directory must be a non-empty string", 400);
+    }
+    data.outputDir = outputDir.trim();
+  }
+
+  if (framework !== undefined) {
+    data.framework = framework as ProjectFramework;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ServiceError("Nothing to update", 400);
+  }
+
+  try {
+    return await updateProjectById(project.id, data);
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ServiceError("A project with this name already exists", 400);
     }
     throw error;
   }

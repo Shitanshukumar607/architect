@@ -8,6 +8,7 @@ import {
   getProjectByName,
   listProjectsForUser,
   listProjectEnvVars,
+  updateProject,
   updateProjectDomain,
   updateProjectEnvVar,
 } from "../services/project.service";
@@ -69,6 +70,22 @@ export async function getProjectByNameController(req: Request, res: Response) {
     }
     console.error("Get project by name error:", error);
     return res.status(500).json({ error: "Failed to fetch project" });
+  }
+}
+
+export async function updateProjectController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { name } = req.params as { name: string };
+    const project = await updateProject(session.user.id, name, req.body);
+
+    return res.status(200).json(project);
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Update project error:", error);
+    return res.status(500).json({ error: "Failed to update project" });
   }
 }
 

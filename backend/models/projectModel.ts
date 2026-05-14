@@ -4,10 +4,23 @@ import { ProjectFramework } from "@prisma/client";
 type CreateProjectInput = {
   name: string;
   repoUrl: string;
+  branch?: string;
+  rootDirectory?: string;
+  autoDeploy?: boolean;
   framework: ProjectFramework;
   buildCommand: string | null;
   outputDir: string;
   userId: string;
+};
+
+type UpdateProjectInput = {
+  name?: string;
+  branch?: string;
+  rootDirectory?: string;
+  autoDeploy?: boolean;
+  framework?: ProjectFramework;
+  buildCommand?: string;
+  outputDir?: string;
 };
 
 type CreateProjectDomainInput = {
@@ -36,11 +49,26 @@ export async function createProject(input: CreateProjectInput) {
     data: {
       name: input.name,
       repoUrl: input.repoUrl,
+      branch: input.branch ?? "main",
+      rootDirectory: input.rootDirectory ?? "/",
+      autoDeploy: input.autoDeploy ?? true,
       framework: input.framework,
       buildCommand: input.buildCommand,
       outputDir: input.outputDir,
       userId: input.userId,
     },
+  });
+}
+
+export async function updateProjectById(
+  projectId: string,
+  data: UpdateProjectInput,
+) {
+  return await prisma.project.update({
+    where: {
+      id: projectId,
+    },
+    data,
   });
 }
 

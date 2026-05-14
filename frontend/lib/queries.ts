@@ -7,6 +7,7 @@ import {
   deployProject,
   fetchProjectEnvVars,
   fetchDeploymentLogs,
+  updateProject,
   createProjectEnvVar,
   updateProjectEnvVar,
   deleteProjectEnvVar,
@@ -156,6 +157,18 @@ export function useVerifyDomain() {
   return useMutation({
     mutationFn: verifyProjectDomain,
     onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [USE_PROJECT_KEY, variables.projectName] })
+    },
+  })
+}
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ projectName, data }: { projectName: string, data: Partial<Project> }) =>
+      updateProject(projectName, data),
+    onSuccess: (updatedProject, variables) => {
+      queryClient.invalidateQueries({ queryKey: [USE_PROJECTS_KEY] })
       queryClient.invalidateQueries({ queryKey: [USE_PROJECT_KEY, variables.projectName] })
     },
   })

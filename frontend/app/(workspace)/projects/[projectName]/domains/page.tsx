@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,7 +14,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { useProject, useCreateDomain, useUpdateDomain } from "@/lib/queries"
-import { getDomain } from "@/lib/utils"
 
 import { DomainsFilters } from "./_components/domains-filters"
 import { DomainsHeader } from "./_components/domains-header"
@@ -22,15 +21,26 @@ import { DomainsTable } from "./_components/domains-table"
 import { DomainsEmptyState } from "./_components/domains-empty-state"
 import { DomainsAddDialog } from "./_components/domains-add-dialog"
 import { DomainsEditDialog } from "./_components/domains-edit-dialog"
-import type { Domain } from "./_components/domains.types"
+import type { Domain, Project } from "./_components/domains.types"
 
-// Removed unused getErrorMessage function
+async function getErrorMessage(response: Response, fallback: string) {
+  try {
+    const data = await response.json()
+    if (data?.error) {
+      return data.error as string
+    }
+  } catch {
+    // ignore
+  }
+  return fallback
+}
 
 export default function ProjectDomainsPage() {
   const params = useParams()
   const {
     data: project,
     isLoading,
+    refetch: fetchProject,
   } = useProject(params.projectName as string)
 
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -40,7 +50,7 @@ export default function ProjectDomainsPage() {
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null)
   const [editHostname, setEditHostname] = useState("")
 
-  // Removed unused baseUrl
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
   const { mutate: createDomain, isPending: isAddingDomain } = useCreateDomain()
   const { mutate: updateDomain, isPending: isUpdatingDomain } = useUpdateDomain()
@@ -98,7 +108,7 @@ export default function ProjectDomainsPage() {
 
   const handleCopyDomain = async (hostname: string) => {
     try {
-      await navigator.clipboard.writeText(getDomain(hostname))
+      await navigator.clipboard.writeText(hostname)
       toast.success("Domain copied to clipboard")
     } catch (error) {
       console.error("Copy domain error:", error)
@@ -106,12 +116,11 @@ export default function ProjectDomainsPage() {
     }
   }
 
-  const startEditing = (domain: Domain) => {
-    setEditingDomain(domain)
-    setEditHostname(domain.hostname)
-  }
-
-  // Removed useEffect for setting editHostname
+  useEffect(() => {
+    if (editingDomain) {
+      setEditHostname(editingDomain.hostname)
+    }
+  }, [editingDomain])
 
   const filteredDomains = useMemo(() => {
     const list = project?.domains ?? []
@@ -164,7 +173,7 @@ export default function ProjectDomainsPage() {
           ) : (
             <DomainsTable
               items={filteredDomains}
-              onEdit={startEditing}
+              onEdit={setEditingDomain}
               onCopy={handleCopyDomain}
             />
           )}

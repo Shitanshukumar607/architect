@@ -22,11 +22,10 @@ export default function ProjectSettingsPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-8 p-4 duration-500 fade-in md:p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">Project Settings</h1>
-        <p className="text-lg text-muted-foreground">
-          Manage settings for{" "}
-          <span className="font-semibold text-foreground">{project.name}</span>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">
+          Project settings for <span className="font-medium text-foreground underline decoration-primary/30 underline-offset-4">{project.name}</span>
         </p>
       </div>
       <ProjectSettings project={project} onRefresh={fetchProjects} />
