@@ -3,51 +3,40 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { formatDistanceToNow } from "date-fns"
 import {
-  Clock,
   ExternalLink,
   GitBranch,
-  Globe,
-  LayoutTemplate,
   Loader2,
   Terminal,
+  Plus,
+  Settings,
+  Globe,
+  Rocket,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { ProjectDeployments } from "./_components/project-deployments"
-import { ProjectSettings } from "./_components/project-settings"
-import { useProject } from "@/lib/queries"
+import Image from "next/image"
+import { useParams } from "next/navigation"
+import { useProject, useDeployProject } from "@/lib/queries"
 import { getDomain } from "@/lib/utils"
-
-// Removed unused type imports
+import { Deployment, EnvVar, Domain } from "@/lib/types"
 
 export default function ProjectPage() {
   const params = useParams()
-  const router = useRouter()
-
   const {
     data: project,
     isLoading,
-    isError,
-    error,
     refetch,
   } = useProject(params.projectName as string)
 
-  useEffect(() => {
-    if (isError && (error as Error)?.message === "Failed to fetch project") {
-      router.push("/projects")
-    }
-  }, [isError, error, router])
+  const { mutate: deploy, isPending: isDeploying } = useDeployProject()
 
   if (isLoading) {
     return (
@@ -61,31 +50,56 @@ export default function ProjectPage() {
     return null
   }
 
-  const latestDeployment = project.deployments?.[0]
+  const deployments = project.deployments || []
+  const latestDeployment = deployments[0]
+  const domains = project.domains || []
+  const envVars = project.envVars || []
+
+  const handleRedeploy = () => {
+    deploy(
+      {
+        repoUrl: project.repoUrl,
+        buildCommand: project.buildCommand,
+        outputDir: project.outputDir,
+      },
+      {
+        onSuccess: () => refetch(),
+      }
+    )
+  }
+
+  const getStatusDot = (status: string) => {
+    switch (status) {
+      case "SUCCESS":
+        return (
+          <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+        )
+      case "FAILED":
+        return (
+          <div className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]" />
+        )
+      case "BUILDING":
+        return <Loader2 className="h-2 w-2 animate-spin text-blue-500" />
+      default:
+        return <div className="h-2 w-2 rounded-full bg-gray-400" />
+    }
+  }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl animate-in flex-col gap-8 p-4 duration-500 fade-in md:p-8">
-      {/* Header Section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">
-              {project.name}
-            </h1>
-            <Badge
-              variant="secondary"
-              className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-            >
-              Active
-            </Badge>
-          </div>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 p-6 md:p-10">
+      {/* Title & Actions */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            {project.name}
+          </h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             {project.repoUrl && (
               <a
                 href={project.repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+                className="flex items-center gap-1 hover:text-foreground"
               >
                 <Image
                   src="/github.svg"
@@ -97,207 +111,217 @@ export default function ProjectPage() {
                 {project.repoUrl.replace("https://github.com/", "")}
               </a>
             )}
-            <div className="flex items-center gap-1.5">
-              <LayoutTemplate className="h-4 w-4" />
-              <span className="capitalize">{project.framework}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              Created{" "}
-              {formatDistanceToNow(new Date(project.createdAt), {
-                addSuffix: true,
-              })}
-            </div>
+            <span className="flex items-center gap-1">
+              <GitBranch className="h-3.5 w-3.5" /> {project.branch || "main"}
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {project.domains?.[0] && (
-            <Button asChild variant="outline" className="gap-2">
+        <div className="flex items-center gap-2">
+          {domains[0] && (
+            <Button asChild variant="outline" className="h-9 px-4">
               <a
-                href={`https://${getDomain(project.domains[0].hostname)}`}
+                href={`https://${getDomain(domains[0].hostname)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Visit <ExternalLink className="h-4 w-4" />
+                Visit Site <ExternalLink className="ml-2 h-3.5 w-3.5" />
               </a>
             </Button>
           )}
+          <Button
+            onClick={handleRedeploy}
+            disabled={isDeploying}
+            className="h-9 px-4 shadow-md"
+          >
+            {isDeploying ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Rocket className="mr-2 h-4 w-4" />
+            )}
+            Redeploy
+          </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
-          <TabsTrigger
-            value="overview"
-            className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pt-2 pb-3 font-medium text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none"
+      {/* Deployments Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <h2 className="text-xl font-bold">Deployments</h2>
+          <Button
+            variant="link"
+            size="sm"
+            asChild
+            className="h-auto p-0 font-bold"
           >
-            Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="domains"
-            className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pt-2 pb-3 font-medium text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Domains
-          </TabsTrigger>
-          <TabsTrigger
-            value="env-vars"
-            className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pt-2 pb-3 font-medium text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Environment Variables
-          </TabsTrigger>
-          <TabsTrigger
-            value="settings"
-            className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pt-2 pb-3 font-medium text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none"
-          >
-            Settings
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-6 space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Latest Deployment Info */}
-            <Card className="col-span-2 lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Production Deployment</CardTitle>
-                <CardDescription>
-                  The deployment that is currently live.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {latestDeployment ? (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          {project.domains?.[0]?.hostname ? (
-                            <a
-                              href={`https://${getDomain(project.domains[0].hostname)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-semibold text-foreground hover:text-primary transition-colors hover:underline"
-                            >
-                              {getDomain(project.domains[0].hostname)}
-                            </a>
-                          ) : (
-                            <span className="font-semibold text-muted-foreground">
-                              Not assigned
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <GitBranch className="h-3 w-3" /> main
-                          </span>
-                          <span>
-                            {formatDistanceToNow(
-                              new Date(latestDeployment.createdAt),
-                              { addSuffix: true }
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      <Badge
-                        variant={
-                          latestDeployment.status === "SUCCESS"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {latestDeployment.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    No deployments found.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Domains Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Domains</CardTitle>
-                <CardDescription>
-                  Domains assigned to this project.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {project.domains?.map((domain) => (
-                    <div
-                      key={domain.id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <a
-                          href={`https://${getDomain(domain.hostname)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium hover:text-primary transition-colors hover:underline"
-                        >
-                          {getDomain(domain.hostname)}
-                        </a>
-                      </div>
-                      {domain.verified && (
-                        <Badge variant="secondary" className="text-xs">
-                          Verified
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="deployments" className="mt-6">
-          <ProjectDeployments project={project} onRefresh={refetch} />
-        </TabsContent>
-
-        <TabsContent value="domains" className="mt-6">
-          <Card className="border-dashed bg-background/50">
-            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <Globe className="mb-4 h-8 w-8 text-primary" />
-              <h3 className="text-lg font-semibold">Manage Domains</h3>
-              <p className="mb-4 text-muted-foreground">
-                View and configure domains for this project.
-              </p>
-              <Button asChild variant="outline">
-                <Link href={`/projects/${params.projectName}/domains`}>
-                  Go to Domains Page
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="env-vars" className="mt-6">
-          <Card className="border-dashed bg-background/50">
-            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <Terminal className="mb-4 h-8 w-8 text-primary" />
-              <h3 className="text-lg font-semibold">Environment Variables</h3>
-              <p className="mb-4 text-muted-foreground">
-                Configure variables for your application.
-              </p>
-              <Button asChild variant="outline">
-                <Link
-                  href={`/projects/${params.projectName}/environment-variables`}
+            <Link href={`/projects/${project.name}/deployments`}>View All</Link>
+          </Button>
+        </div>
+        <div className="overflow-hidden rounded-xl border bg-background/50">
+          <Table>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-10 font-bold">ID</TableHead>
+                <TableHead className="h-10 font-bold">Status</TableHead>
+                <TableHead className="h-10 font-bold">Environment</TableHead>
+                <TableHead className="h-10 text-right font-bold">
+                  Created
+                </TableHead>
+                <TableHead className="h-10 w-[80px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {deployments.slice(0, 3).map((deployment) => (
+                <TableRow
+                  key={deployment.id}
+                  className="group hover:bg-muted/20"
                 >
-                  Go to Env Vars Page
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  <TableCell className="py-3 font-mono text-xs font-semibold">
+                    {deployment.id.substring(0, 8)}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-2 text-xs font-bold tracking-tight uppercase">
+                      {getStatusDot(deployment.status)}
+                      {deployment.status}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3 text-xs font-medium">
+                    Production
+                  </TableCell>
+                  <TableCell className="py-3 text-right text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(deployment.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </TableCell>
+                  <TableCell className="py-3 text-right">
+                    <Button variant="ghost" size="icon-sm" asChild>
+                      <Link
+                        href={`/projects/${project.name}/deployments/${deployment.id}`}
+                      >
+                        <Terminal className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
 
-        <TabsContent value="settings" className="mt-6">
-          <ProjectSettings project={project} onRefresh={refetch} />
-        </TabsContent>
-      </Tabs>
+      {/* Domains Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <h2 className="text-xl font-bold">Domains</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-3 text-xs"
+            asChild
+          >
+            <Link href={`/projects/${project.name}/domains`}>
+              <Plus className="mr-1.5 h-3 w-3" /> Add
+            </Link>
+          </Button>
+        </div>
+        <div className="overflow-hidden rounded-xl border bg-background/50">
+          <Table>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-10 font-bold">Hostname</TableHead>
+                <TableHead className="h-10 font-bold">Status</TableHead>
+                <TableHead className="h-10 text-right font-bold">
+                  Action
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {domains.map((domain) => (
+                <TableRow key={domain.id} className="hover:bg-muted/20">
+                  <TableCell className="py-3 text-sm font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                      {getDomain(domain.hostname)}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {domain.verified ? (
+                      <Badge
+                        variant="secondary"
+                        className="h-5 border-emerald-500/20 bg-emerald-500/10 text-[10px] text-emerald-600"
+                      >
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="h-5 text-[10px]">
+                        Pending
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3 text-right">
+                    <Button variant="ghost" size="icon-sm" asChild>
+                      <a
+                        href={`https://${getDomain(domain.hostname)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {domains.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="py-10 text-center text-sm text-muted-foreground"
+                  >
+                    No domains configured.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+
+      {/* Settings Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2">
+          <h2 className="text-xl font-bold">Project Settings</h2>
+          <Button variant="ghost" size="sm" asChild className="h-auto p-0">
+            <Link href={`/projects/${project.name}/settings`}>
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="space-y-1.5 p-1">
+            <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              Build Command
+            </p>
+            <code className="block truncate rounded bg-muted/50 px-2 py-1 font-mono text-xs">
+              {project.buildCommand || "npm run build"}
+            </code>
+          </div>
+          <div className="space-y-1.5 p-1">
+            <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              Output Directory
+            </p>
+            <p className="text-sm font-semibold">
+              {project.outputDir || "dist"}
+            </p>
+          </div>
+          <div className="space-y-1.5 p-1">
+            <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              Framework
+            </p>
+            <p className="text-sm font-semibold capitalize">
+              {project.framework}
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
