@@ -144,7 +144,6 @@ function ProjectRow({ project }: { project: Project }) {
               variant="outline"
               className="gap-1.5 border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
             >
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
               Active
             </Badge>
           ) : (
@@ -152,7 +151,6 @@ function ProjectRow({ project }: { project: Project }) {
               variant="outline"
               className="gap-1.5 bg-muted/30 px-2.5 py-1 text-xs font-semibold text-muted-foreground/60"
             >
-              <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
               Disabled
             </Badge>
           )}
