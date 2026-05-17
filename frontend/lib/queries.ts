@@ -14,9 +14,10 @@ import {
   createProjectDomain,
   updateProjectDomain,
   deleteProjectDomain,
-  verifyProjectDomain
+  verifyProjectDomain,
+  fetchGitHubRepos
 } from "./api"
-import { Project, Deployment, EnvVar } from "./types"
+import { Project, Deployment, EnvVar, GitHubRepo } from "./types"
 
 export const USE_PROJECTS_KEY = "projects"
 export const USE_PROJECT_KEY = "project"
@@ -171,5 +172,14 @@ export function useUpdateProject() {
       queryClient.invalidateQueries({ queryKey: [USE_PROJECTS_KEY] })
       queryClient.invalidateQueries({ queryKey: [USE_PROJECT_KEY, variables.projectName] })
     },
+  })
+}
+
+export function useGitHubRepos(enabled: boolean = true) {
+  return useQuery<GitHubRepo[]>({
+    queryKey: ["githubRepos"],
+    queryFn: fetchGitHubRepos,
+    enabled,
+    staleTime: 5 * 60 * 1000,
   })
 }

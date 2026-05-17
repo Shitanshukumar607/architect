@@ -46,3 +46,12 @@ export interface Project {
   deployments: Deployment[]
   envVars: EnvVar[]
 }
+
+export interface GitHubRepo {
+  id: number
+  name: string
+  fullName: string
+  private: boolean
+  defaultBranch: string
+}
+

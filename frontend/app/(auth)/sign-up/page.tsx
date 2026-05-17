@@ -160,7 +160,25 @@ export default function SignUpPage() {
             variant="outline"
             className="w-full gap-2"
             disabled={isLoading}
-            onClick={() => toast.info("GitHub sign-up isn’t configured yet")}
+            onClick={async () => {
+              setIsLoading(true)
+              await authClient.signIn.social(
+                {
+                  provider: "github",
+                  callbackURL:
+                    `${process.env.NEXT_PUBLIC_FRONTEND_URL}/projects` ||
+                    "http://localhost:3000/projects",
+                },
+                {
+                  onError: (ctx) => {
+                    toast.error(
+                      ctx.error.message || "Failed to sign up with GitHub"
+                    )
+                    setIsLoading(false)
+                  },
+                }
+              )
+            }}
           >
             <Image
               src="/github.svg"

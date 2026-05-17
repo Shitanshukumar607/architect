@@ -6,6 +6,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import deployRoutes from "./routes/deploy.route";
 import projectRoutes from "./routes/projects.route";
+import githubRoutes from "./routes/github.route";
 import { deploymentHandlerController } from "./controllers/deployment-handler.controller";
 import { startWorker } from "./worker/worker";
 
@@ -26,6 +27,7 @@ app.use(express.json());
 
 app.use("/api/deploy", deployRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/github", githubRoutes);
 
 app.get("/health", (req, res) => {
   res.send("OK");

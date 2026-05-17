@@ -1,4 +1,4 @@
-import { Project, Deployment, EnvVar, Domain, DeploymentLog } from "./types"
+import { Project, Deployment, EnvVar, Domain, DeploymentLog, GitHubRepo } from "./types"
 
 const getBaseUrl = () =>
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -151,5 +151,18 @@ export const verifyProjectDomain = async ({ projectName, domainId }: { projectNa
     credentials: "include",
   })
   if (!response.ok) throw new Error("Failed to verify domain")
+  return response.json()
+}
+
+export const fetchGitHubRepos = async (): Promise<GitHubRepo[]> => {
+  const response = await fetch(`${getBaseUrl()}/api/github/repos`, {
+    credentials: "include",
+  })
+  if (!response.ok) {
+    if (response.status === 400) {
+      return []
+    }
+    throw new Error("Failed to fetch GitHub repos")
+  }
   return response.json()
 }
