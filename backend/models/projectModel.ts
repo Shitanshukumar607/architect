@@ -210,3 +210,11 @@ export async function deleteProjectEnvVarById(envVarId: string) {
     },
   });
 }
+
+export async function deleteProjectById(id: string) {
+  return await prisma.project.delete({
+    where: {
+      id,
+    },
+  });
+}

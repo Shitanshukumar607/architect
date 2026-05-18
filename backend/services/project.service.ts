@@ -13,6 +13,7 @@ import {
   updateProjectById,
   updateProjectDomainById,
   updateProjectEnvVarById,
+  deleteProjectById,
 } from "../models/projectModel";
 import { createDeploymentForProject } from "../models/deploymentModel";
 import { generateId } from "../utils/generateId";
@@ -227,6 +228,15 @@ export async function getProjectByName(userId: string, name?: string) {
   }
 
   return project;
+}
+
+export async function deleteProject(userId: string, name: string) {
+  const project = await getProjectByNameForUser(userId, name);
+  if (!project) {
+    throw new ServiceError("Project not found", 404);
+  }
+
+  return await deleteProjectById(project.id);
 }
 
 export async function addProjectDomain(

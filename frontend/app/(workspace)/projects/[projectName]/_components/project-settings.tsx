@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { useUpdateProject } from "@/lib/queries"
+import { useUpdateProject, useDeleteProject } from "@/lib/queries"
 import { Project } from "@/lib/types"
 import { AlertTriangle, Copy, FolderOpen, GitBranch, Layout, Save, Terminal, Trash2 } from "lucide-react"
 import Image from "next/image"
@@ -27,10 +27,11 @@ export function ProjectSettings({
 }) {
   const router = useRouter()
   const { mutate: updateProject, isPending } = useUpdateProject()
+  const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject()
   
   const [formData, setFormData] = useState({
     name: project.name,
-    buildCommand: project.buildCommand || "",
+    buildCommand: project.buildCommand || "npm run build",
     outputDir: project.outputDir || "dist",
     rootDirectory: project.rootDirectory || "/",
     branch: project.branch || "main",
@@ -68,6 +69,20 @@ export function ProjectSettings({
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success("Copied to clipboard")
+  }
+
+  const handleDeleteProject = () => {
+    if (confirm("Are you sure you want to delete this project? This action is irreversible.")) {
+      deleteProject(project.name, {
+        onSuccess: () => {
+          toast.success("Project deleted successfully")
+          router.push("/projects")
+        },
+        onError: (error) => {
+          toast.error(error.message || "Failed to delete project")
+        }
+      })
+    }
   }
 
   return (
@@ -324,9 +339,14 @@ export function ProjectSettings({
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex justify-end border-t border-destructive/10 bg-destructive/5 px-6 py-3">
-            <Button variant="destructive" className="gap-2 rounded-xl px-6 transition-all hover:scale-105">
+            <Button 
+              variant="destructive" 
+              className="gap-2 rounded-xl px-6 transition-all hover:scale-105"
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
+            >
               <Trash2 className="h-4 w-4" />
-              Delete Project
+              {isDeleting ? "Deleting..." : "Delete Project"}
             </Button>
           </CardFooter>
         </Card>

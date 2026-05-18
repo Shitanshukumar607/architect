@@ -11,6 +11,7 @@ import {
   getProjectEnvVarsController,
   updateProjectDomainController,
   updateProjectEnvVarController,
+  deleteProjectController,
 } from "../controllers/project.controller";
 import { requireAuth } from "../middleware/authMiddleware";
 
@@ -20,6 +21,7 @@ router.get("/", requireAuth, getProjectsController);
 router.post("/", requireAuth, createProjectController);
 router.get("/name/:name", requireAuth, getProjectByNameController);
 router.put("/name/:name", requireAuth, updateProjectController);
+router.delete("/name/:name", requireAuth, deleteProjectController);
 router.get("/name/:name/env-vars", requireAuth, getProjectEnvVarsController);
 router.post("/name/:name/domains", requireAuth, addProjectDomainController);
 router.put(

@@ -15,7 +15,8 @@ import {
   updateProjectDomain,
   deleteProjectDomain,
   verifyProjectDomain,
-  fetchGitHubRepos
+  fetchGitHubRepos,
+  deleteProject
 } from "./api"
 import { Project, Deployment, EnvVar, GitHubRepo } from "./types"
 
@@ -171,6 +172,17 @@ export function useUpdateProject() {
     onSuccess: (updatedProject, variables) => {
       queryClient.invalidateQueries({ queryKey: [USE_PROJECTS_KEY] })
       queryClient.invalidateQueries({ queryKey: [USE_PROJECT_KEY, variables.projectName] })
+    },
+  })
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteProject,
+    onSuccess: (_, projectName) => {
+      queryClient.invalidateQueries({ queryKey: [USE_PROJECTS_KEY] })
+      queryClient.removeQueries({ queryKey: [USE_PROJECT_KEY, projectName] })
     },
   })
 }

@@ -11,6 +11,7 @@ import {
   updateProject,
   updateProjectDomain,
   updateProjectEnvVar,
+  deleteProject,
 } from "../services/project.service";
 import { ServiceError } from "../services/service-error";
 
@@ -86,6 +87,23 @@ export async function updateProjectController(req: Request, res: Response) {
     }
     console.error("Update project error:", error);
     return res.status(500).json({ error: "Failed to update project" });
+  }
+}
+
+export async function deleteProjectController(req: Request, res: Response) {
+  try {
+    const session = (req as any).session;
+    const { name } = req.params as { name: string };
+    
+    await deleteProject(session.user.id, name);
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Delete project error:", error);
+    return res.status(500).json({ error: "Failed to delete project" });
   }
 }
 

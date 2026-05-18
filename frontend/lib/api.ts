@@ -46,6 +46,15 @@ export const fetchProjectDeployments = async (projectId: string): Promise<Deploy
   return response.json()
 }
 
+export const deleteProject = async (projectName: string) => {
+  const response = await fetch(`${getBaseUrl()}/api/projects/name/${projectName}`, {
+    method: "DELETE",
+    credentials: "include",
+  })
+  if (!response.ok) throw new Error("Failed to delete project")
+  return response.json()
+}
+
 export const createProject = async (data: { repoUrl: string, framework: string, buildCommand: string, outputDir: string }): Promise<Project> => {
   const response = await fetch(`${getBaseUrl()}/api/projects`, {
     method: "POST",
