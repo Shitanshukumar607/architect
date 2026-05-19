@@ -52,12 +52,10 @@ async function processDeploymentJob(job: Deployment) {
       throw new Error("Docker is not installed or not accessible");
     }
 
-    // Mount the pre-created host directory directly as the output dir inside
-    // the container so the build writes straight into the shared volume.
     const outputDir = job.outputDir || "dist";
     await logAndPrint(job.id, "info", `Starting container ${containerName}`);
     await execPromise(
-      `docker run -d --name ${containerName} -v /tmp/deployments/${job.id}:/app/${outputDir} node:20 tail -f /dev/null`,
+      `docker run -d --name ${containerName} node:20 tail -f /dev/null`,
     );
 
     try {
@@ -113,24 +111,26 @@ async function processDeploymentJob(job: Deployment) {
         );
       }
 
-      // No copy step needed — the build wrote directly into the shared volume mount.
+      // Copy build output from container to host tmpDir.
+      await logAndPrint(job.id, "info", `Copying build output from container`);
+      await execPromise(
+        `docker cp ${containerName}:/repo/${outputDir}/. ${tmpDir}`,
+      );
 
-      if (fs.existsSync(tmpDir)) {
-        await logAndPrint(job.id, "info", `Uploading files to S3`);
-        await uploadDirectoryToS3(tmpDir, `deployments/${job.id}`);
-
-        await updateDeploymentStatus(job.id, DeploymentStatus.SUCCESS, {
-          finishedAt: new Date(),
-        });
-        await logAndPrint(job.id, "info", `Deployment completed successfully`);
-      } else {
-        await logAndPrint(
-          job.id,
-          "error",
-          `Output directory ${job.outputDir} not found`,
+      const files = fs.readdirSync(tmpDir);
+      if (files.length === 0) {
+        throw new Error(
+          `Build output directory is empty (outputDir: ${outputDir})`,
         );
-        throw new Error(`Output directory ${job.outputDir} not found`);
       }
+
+      await logAndPrint(job.id, "info", `Uploading files to S3`);
+      await uploadDirectoryToS3(tmpDir, `deployments/${job.id}`);
+
+      await updateDeploymentStatus(job.id, DeploymentStatus.SUCCESS, {
+        finishedAt: new Date(),
+      });
+      await logAndPrint(job.id, "info", `Deployment completed successfully`);
     } finally {
       await logAndPrint(job.id, "info", `Cleaning up container`);
       await execPromise(`docker rm -f ${containerName}`).catch(() => {});
