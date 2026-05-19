@@ -29,19 +29,18 @@ async function processDeploymentJob(job: Deployment) {
   });
 
   const projectTmpDir = path.join("/tmp", "deployments");
-
-  if (!fs.existsSync(projectTmpDir)) {
-    fs.mkdirSync(projectTmpDir, { recursive: true });
-  }
   const tmpDir = path.join(projectTmpDir, job.id);
   const containerName = `build-${job.id}`;
 
-  try {
-    if (fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(tmpDir, { recursive: true });
+  // Pre-create the directory as the current user BEFORE docker run.
+  // If we let Docker create it, the daemon creates it as root:root on the host
+  // and the build container cannot write into it.
+  if (fs.existsSync(tmpDir)) {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(tmpDir, { recursive: true });
 
+  try {
     try {
       await execPromise("docker --version");
     } catch {
@@ -53,9 +52,12 @@ async function processDeploymentJob(job: Deployment) {
       throw new Error("Docker is not installed or not accessible");
     }
 
+    // Mount the pre-created host directory directly as the output dir inside
+    // the container so the build writes straight into the shared volume.
+    const outputDir = job.outputDir || "dist";
     await logAndPrint(job.id, "info", `Starting container ${containerName}`);
     await execPromise(
-      `docker run -d --name ${containerName} -v /tmp/deployments/${job.id}:/out node:20 tail -f /dev/null`,
+      `docker run -d --name ${containerName} -v /tmp/deployments/${job.id}:/app/${outputDir} node:20 tail -f /dev/null`,
     );
 
     try {
@@ -76,7 +78,7 @@ async function processDeploymentJob(job: Deployment) {
         `Cloning repository inside container (branch: ${branch})`,
       );
       const { stdout: cloneOut, stderr: cloneErr } = await execPromise(
-        `docker exec ${containerName} git clone -b ${branch} ${job.repoUrl} /app`,
+        `docker exec ${containerName} git clone -b ${branch} ${job.repoUrl} /repo`,
       );
       if (cloneOut) await logAndPrint(job.id, "info", cloneOut);
       if (cloneErr) await logAndPrint(job.id, "info", cloneErr);
@@ -88,7 +90,7 @@ async function processDeploymentJob(job: Deployment) {
           `Installing dependencies inside container`,
         );
         const { stdout: npmOut, stderr: npmErr } = await execPromise(
-          `docker exec -w /app ${containerName} npm install`,
+          `docker exec -w /repo ${containerName} npm install`,
         );
         if (npmOut) await logAndPrint(job.id, "info", npmOut);
         if (npmErr) await logAndPrint(job.id, "info", npmErr);
@@ -99,7 +101,7 @@ async function processDeploymentJob(job: Deployment) {
           `Running build command: ${job.buildCommand}`,
         );
         const { stdout: buildOut, stderr: buildErr } = await execPromise(
-          `docker exec -w /app ${containerName} ${job.buildCommand}`,
+          `docker exec -w /repo ${containerName} ${job.buildCommand}`,
         );
         if (buildOut) await logAndPrint(job.id, "info", buildOut);
         if (buildErr) await logAndPrint(job.id, "info", buildErr);
@@ -111,14 +113,7 @@ async function processDeploymentJob(job: Deployment) {
         );
       }
 
-      await logAndPrint(
-        job.id,
-        "info",
-        `Copying output to shared volume`,
-      );
-      await execPromise(
-        `docker exec ${containerName} sh -c "cp -r /app/${job.outputDir}/. /out/"`,
-      );
+      // No copy step needed — the build wrote directly into the shared volume mount.
 
       if (fs.existsSync(tmpDir)) {
         await logAndPrint(job.id, "info", `Uploading files to S3`);
