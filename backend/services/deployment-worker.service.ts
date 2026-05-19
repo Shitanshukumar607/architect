@@ -4,7 +4,10 @@ import fs from "fs";
 import path from "path";
 import util from "util";
 import { pop } from "../queue/queue";
-import { updateDeploymentStatus, addDeploymentLog } from "../models/deploymentModel";
+import {
+  updateDeploymentStatus,
+  addDeploymentLog,
+} from "../models/deploymentModel";
 import { uploadDirectoryToS3 } from "../utils/uploadToS3";
 import { rewriteHtmlPaths } from "../utils/rewritePaths";
 import { prisma } from "../lib/prisma";
@@ -25,7 +28,11 @@ async function processDeploymentJob(job: Deployment) {
     errorMessage: null,
   });
 
-  const projectTmpDir = path.join(process.cwd(), "tmp");
+  const projectTmpDir = path.join("/tmp", "deployments");
+
+  if (!fs.existsSync(projectTmpDir)) {
+    fs.mkdirSync(projectTmpDir, { recursive: true });
+  }
   const tmpDir = path.join(projectTmpDir, job.id);
   const containerName = `build-${job.id}`;
 
@@ -37,7 +44,11 @@ async function processDeploymentJob(job: Deployment) {
     try {
       await execPromise("docker --version");
     } catch {
-      await logAndPrint(job.id, "error", "Docker is not installed or not accessible");
+      await logAndPrint(
+        job.id,
+        "error",
+        "Docker is not installed or not accessible",
+      );
       throw new Error("Docker is not installed or not accessible");
     }
 
@@ -51,14 +62,18 @@ async function processDeploymentJob(job: Deployment) {
       if (job.projectId) {
         const project = await prisma.project.findUnique({
           where: { id: job.projectId },
-          select: { branch: true }
+          select: { branch: true },
         });
         if (project && project.branch) {
           branch = project.branch;
         }
       }
 
-      await logAndPrint(job.id, "info", `Cloning repository inside container (branch: ${branch})`);
+      await logAndPrint(
+        job.id,
+        "info",
+        `Cloning repository inside container (branch: ${branch})`,
+      );
       const { stdout: cloneOut, stderr: cloneErr } = await execPromise(
         `docker exec ${containerName} git clone -b ${branch} ${job.repoUrl} /app`,
       );
@@ -66,22 +81,40 @@ async function processDeploymentJob(job: Deployment) {
       if (cloneErr) await logAndPrint(job.id, "info", cloneErr);
 
       if (job.buildCommand) {
-        await logAndPrint(job.id, "info", `Installing dependencies inside container`);
-        const { stdout: npmOut, stderr: npmErr } = await execPromise(`docker exec -w /app ${containerName} npm install`);
+        await logAndPrint(
+          job.id,
+          "info",
+          `Installing dependencies inside container`,
+        );
+        const { stdout: npmOut, stderr: npmErr } = await execPromise(
+          `docker exec -w /app ${containerName} npm install`,
+        );
         if (npmOut) await logAndPrint(job.id, "info", npmOut);
         if (npmErr) await logAndPrint(job.id, "info", npmErr);
 
-        await logAndPrint(job.id, "info", `Running build command: ${job.buildCommand}`);
+        await logAndPrint(
+          job.id,
+          "info",
+          `Running build command: ${job.buildCommand}`,
+        );
         const { stdout: buildOut, stderr: buildErr } = await execPromise(
           `docker exec -w /app ${containerName} ${job.buildCommand}`,
         );
         if (buildOut) await logAndPrint(job.id, "info", buildOut);
         if (buildErr) await logAndPrint(job.id, "info", buildErr);
       } else {
-        await logAndPrint(job.id, "info", `No buildCommand provided; treating as static deployment`);
+        await logAndPrint(
+          job.id,
+          "info",
+          `No buildCommand provided; treating as static deployment`,
+        );
       }
 
-      await logAndPrint(job.id, "info", `Copying output to host using docker cp`);
+      await logAndPrint(
+        job.id,
+        "info",
+        `Copying output to host using docker cp`,
+      );
       await execPromise(
         `docker cp ${containerName}:/app/${job.outputDir} ${tmpDir}`,
       );
@@ -95,7 +128,11 @@ async function processDeploymentJob(job: Deployment) {
         });
         await logAndPrint(job.id, "info", `Deployment completed successfully`);
       } else {
-        await logAndPrint(job.id, "error", `Output directory ${job.outputDir} not found`);
+        await logAndPrint(
+          job.id,
+          "error",
+          `Output directory ${job.outputDir} not found`,
+        );
         throw new Error(`Output directory ${job.outputDir} not found`);
       }
     } finally {
