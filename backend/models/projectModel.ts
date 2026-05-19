@@ -53,7 +53,7 @@ export async function createProject(input: CreateProjectInput) {
       rootDirectory: input.rootDirectory ?? "/",
       autoDeploy: input.autoDeploy ?? true,
       framework: input.framework,
-      buildCommand: input.buildCommand,
+      buildCommand: input.buildCommand ?? undefined,
       outputDir: input.outputDir,
       userId: input.userId,
     },
