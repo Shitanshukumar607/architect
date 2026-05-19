@@ -3,14 +3,13 @@ import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
 import util from "util";
-import { pop } from "../queue/queue";
-import {
-  updateDeploymentStatus,
-  addDeploymentLog,
-} from "../models/deploymentModel";
-import { uploadDirectoryToS3 } from "../utils/uploadToS3";
-import { rewriteHtmlPaths } from "../utils/rewritePaths";
 import { prisma } from "../lib/prisma";
+import {
+  addDeploymentLog,
+  updateDeploymentStatus,
+} from "../models/deploymentModel";
+import { pop } from "../queue/queue";
+import { uploadDirectoryToS3 } from "../utils/uploadToS3";
 
 const execPromise = util.promisify(exec);
 
