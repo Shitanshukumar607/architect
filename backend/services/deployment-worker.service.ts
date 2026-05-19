@@ -7,6 +7,7 @@ import { pop } from "../queue/queue";
 import { updateDeploymentStatus, addDeploymentLog } from "../models/deploymentModel";
 import { uploadDirectoryToS3 } from "../utils/uploadToS3";
 import { rewriteHtmlPaths } from "../utils/rewritePaths";
+import { prisma } from "../lib/prisma";
 
 const execPromise = util.promisify(exec);
 
@@ -46,9 +47,20 @@ async function processDeploymentJob(job: Deployment) {
     );
 
     try {
-      await logAndPrint(job.id, "info", `Cloning repository inside container`);
+      let branch = "main";
+      if (job.projectId) {
+        const project = await prisma.project.findUnique({
+          where: { id: job.projectId },
+          select: { branch: true }
+        });
+        if (project && project.branch) {
+          branch = project.branch;
+        }
+      }
+
+      await logAndPrint(job.id, "info", `Cloning repository inside container (branch: ${branch})`);
       const { stdout: cloneOut, stderr: cloneErr } = await execPromise(
-        `docker exec ${containerName} git clone ${job.repoUrl} /app`,
+        `docker exec ${containerName} git clone -b ${branch} ${job.repoUrl} /app`,
       );
       if (cloneOut) await logAndPrint(job.id, "info", cloneOut);
       if (cloneErr) await logAndPrint(job.id, "info", cloneErr);

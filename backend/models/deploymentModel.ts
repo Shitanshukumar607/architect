@@ -42,15 +42,15 @@ export async function createDeployment(input: CreateDeploymentInput) {
       },
     },
     update: {
-      buildCommand: input.buildCommand,
+      buildCommand: input.buildCommand || "npm run build",
       outputDir: input.outputDir,
       framework,
     },
     create: {
-      userId: input.userId,
+      user: { connect: { id: input.userId } },
       repoUrl: input.repoUrl,
       name: inferProjectName(input.repoUrl),
-      buildCommand: input.buildCommand,
+      buildCommand: input.buildCommand || "npm run build",
       outputDir: input.outputDir,
       framework,
     },
