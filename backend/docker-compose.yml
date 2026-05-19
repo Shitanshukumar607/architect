@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: architect-postgres
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: architect
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: architect-backend
+
+    restart: always
+
+    ports:
+      - "5000:5000"
+
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/architect
+
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
