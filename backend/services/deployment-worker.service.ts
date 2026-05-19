@@ -40,6 +40,7 @@ async function processDeploymentJob(job: Deployment) {
     if (fs.existsSync(tmpDir)) {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
+    fs.mkdirSync(tmpDir, { recursive: true });
 
     try {
       await execPromise("docker --version");
@@ -54,7 +55,7 @@ async function processDeploymentJob(job: Deployment) {
 
     await logAndPrint(job.id, "info", `Starting container ${containerName}`);
     await execPromise(
-      `docker run -d --name ${containerName} -v ${projectTmpDir}:/tmp node:20 tail -f /dev/null`,
+      `docker run -d --name ${containerName} -v /tmp/deployments/${job.id}:/out node:20 tail -f /dev/null`,
     );
 
     try {
@@ -113,10 +114,10 @@ async function processDeploymentJob(job: Deployment) {
       await logAndPrint(
         job.id,
         "info",
-        `Copying output to host using docker cp`,
+        `Copying output to shared volume`,
       );
       await execPromise(
-        `docker cp ${containerName}:/app/${job.outputDir} ${tmpDir}`,
+        `docker exec ${containerName} sh -c "cp -r /app/${job.outputDir}/. /out/"`,
       );
 
       if (fs.existsSync(tmpDir)) {

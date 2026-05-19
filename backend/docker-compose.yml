@@ -32,6 +32,7 @@ services:
     restart: always
 
     volumes:
+      - /tmp/deployments:/tmp/deployments
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
