@@ -20,16 +20,15 @@ services:
     build: .
     container_name: architect-backend
 
-    restart: always
+    env_file:
+      - .env
 
     ports:
       - "5000:5000"
 
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/architect
-
     depends_on:
       - postgres
 
+    restart: always
 volumes:
   postgres_data:
