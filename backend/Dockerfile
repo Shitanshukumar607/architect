@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:22
 
 WORKDIR /app
 
@@ -9,8 +9,6 @@ COPY prisma ./prisma
 RUN npm install
 
 COPY . .
-
-RUN npx prisma generate
 
 RUN npm run build
 
