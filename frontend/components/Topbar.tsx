@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Fragment } from "react"
+import { cn } from "@/lib/utils"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -29,10 +30,9 @@ export function TopbarComponent({
   const segments = pathname.split("/").filter(Boolean)
   const breadcrumbItems = segments.map((segment, index) => {
     const href = `/${segments.slice(0, index + 1).join("/")}`
-    const label = segment
-      .split("-")
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ")
+
+    const decodedSegment = decodeURIComponent(segment)
+    const label = decodedSegment;
 
     return {
       href,
@@ -41,15 +41,22 @@ export function TopbarComponent({
     }
   })
 
+  const allBreadcrumbs = [
+    { href: "", label: "Workspace", isLast: segments.length === 0 },
+    ...breadcrumbItems,
+  ]
+
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur md:px-6">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden" />
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur md:px-6">
+      <div className="flex items-center gap-4">
+        <SidebarTrigger className="-ml-2 md:hidden" />
         <Breadcrumb>
           <BreadcrumbList>
-            {breadcrumbItems.map((item) => (
+            {allBreadcrumbs.map((item, index) => (
               <Fragment key={item.href}>
-                <BreadcrumbItem>
+                <BreadcrumbItem
+                  className={cn(index === 0 && "hidden md:block")}
+                >
                   {item.isLast ? (
                     <BreadcrumbPage>{item.label}</BreadcrumbPage>
                   ) : (
@@ -58,7 +65,11 @@ export function TopbarComponent({
                     </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
-                {!item.isLast && <BreadcrumbSeparator />}
+                {!item.isLast && (
+                  <BreadcrumbSeparator
+                    className={cn(index === 0 && "hidden md:block")}
+                  />
+                )}
               </Fragment>
             ))}
           </BreadcrumbList>
