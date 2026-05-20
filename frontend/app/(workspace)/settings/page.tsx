@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { useProjects } from "@/lib/queries"
 import { Project } from "@/lib/types"
-import { ChevronRight, FolderGit2, Loader2, Search, Settings2 } from "lucide-react"
+import { FolderGit2, Loader2, Search, Settings2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -63,7 +63,7 @@ export default function SettingsPage() {
           </Button>
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed bg-background/50">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/50 py-20 text-center">
           <p className="text-lg text-muted-foreground">
             No results found for &quot;{searchQuery}&quot;
           </p>
@@ -84,7 +84,10 @@ export default function SettingsPage() {
             </TableHeader>
             <TableBody>
               {filteredProjects.map((project) => (
-                <TableRow key={project.id} className="group transition-colors hover:bg-muted/10">
+                <TableRow
+                  key={project.id}
+                  className="group transition-colors hover:bg-muted/10"
+                >
                   <TableCell className="px-4 py-4 align-top font-medium">
                     <Link
                       href={`/projects/${project.name}`}
@@ -94,22 +97,38 @@ export default function SettingsPage() {
                     </Link>
                   </TableCell>
                   <TableCell className="px-4 py-4 align-top">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                    <div className="grid grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] uppercase font-semibold tracking-wider">Framework</span>
-                        <span className="text-foreground font-medium">{project.framework || "None"}</span>
+                        <span className="text-[10px] font-semibold tracking-wider uppercase">
+                          Framework
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {project.framework || "None"}
+                        </span>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] uppercase font-semibold tracking-wider">Build Command</span>
-                        <code className="font-mono text-xs text-foreground bg-muted/50 rounded-md px-1.5 py-0.5 w-fit border">{project.buildCommand || "None"}</code>
+                        <span className="text-[10px] font-semibold tracking-wider uppercase">
+                          Build Command
+                        </span>
+                        <code className="w-fit rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-xs text-foreground">
+                          {project.buildCommand || "None"}
+                        </code>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] uppercase font-semibold tracking-wider">Output Directory</span>
-                        <code className="font-mono text-xs text-foreground bg-muted/50 rounded-md px-1.5 py-0.5 w-fit border">{project.outputDir || "None"}</code>
+                        <span className="text-[10px] font-semibold tracking-wider uppercase">
+                          Output Directory
+                        </span>
+                        <code className="w-fit rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-xs text-foreground">
+                          {project.outputDir || "None"}
+                        </code>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] uppercase font-semibold tracking-wider">Auto Deploy</span>
-                        <span className="text-foreground">{project.autoDeploy ? "Enabled" : "Disabled"}</span>
+                        <span className="text-[10px] font-semibold tracking-wider uppercase">
+                          Auto Deploy
+                        </span>
+                        <span className="text-foreground">
+                          {project.autoDeploy ? "Enabled" : "Disabled"}
+                        </span>
                       </div>
                     </div>
                   </TableCell>

@@ -10,31 +10,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useDeployProject, useProject } from "@/lib/queries"
 import { formatDistanceToNow } from "date-fns"
 import {
   ExternalLink,
   GitBranch,
-  Loader2,
-  Terminal,
-  Plus,
-  Settings,
   Globe,
+  Loader2,
+  Plus,
   Rocket,
+  Settings,
+  Terminal,
 } from "lucide-react"
-import Link from "next/link"
 import Image from "next/image"
-import { useParams } from "next/navigation"
-import { useProject, useDeployProject } from "@/lib/queries"
-import { getDomain } from "@/lib/utils"
-import { Deployment, EnvVar, Domain } from "@/lib/types"
+import Link from "next/link"
+import { use } from "react"
 
-export default function ProjectPage() {
-  const params = useParams()
-  const {
-    data: project,
-    isLoading,
-    refetch,
-  } = useProject(params.projectName as string)
+export default function ProjectDetailsPage({
+  params,
+}: {
+  params: Promise<{
+    projectName: string
+  }>
+}) {
+  const { projectName } = use(params)
+  const { data: project, isLoading, refetch } = useProject(projectName)
 
   const { mutate: deploy, isPending: isDeploying } = useDeployProject()
 
@@ -51,9 +51,7 @@ export default function ProjectPage() {
   }
 
   const deployments = project.deployments || []
-  const latestDeployment = deployments[0]
   const domains = project.domains || []
-  const envVars = project.envVars || []
 
   const handleRedeploy = () => {
     deploy(
@@ -120,7 +118,7 @@ export default function ProjectPage() {
           {domains[0] && (
             <Button asChild variant="outline" className="h-9 px-4">
               <a
-                href={`https://${getDomain(domains[0].hostname)}`}
+                href={`https://${domains[0].hostname}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -240,7 +238,7 @@ export default function ProjectPage() {
                   <TableCell className="py-3 text-sm font-semibold">
                     <div className="flex items-center gap-2">
                       <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                      {getDomain(domain.hostname)}
+                      {domain.hostname}
                     </div>
                   </TableCell>
                   <TableCell className="py-3">
@@ -260,7 +258,7 @@ export default function ProjectPage() {
                   <TableCell className="py-3 text-right">
                     <Button variant="ghost" size="icon-sm" asChild>
                       <a
-                        href={`https://${getDomain(domain.hostname)}`}
+                        href={`https://${domain.hostname}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

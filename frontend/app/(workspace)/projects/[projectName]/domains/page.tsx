@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,27 +21,11 @@ import { DomainsTable } from "./_components/domains-table"
 import { DomainsEmptyState } from "./_components/domains-empty-state"
 import { DomainsAddDialog } from "./_components/domains-add-dialog"
 import { DomainsEditDialog } from "./_components/domains-edit-dialog"
-import type { Domain, Project } from "./_components/domains.types"
-
-async function getErrorMessage(response: Response, fallback: string) {
-  try {
-    const data = await response.json()
-    if (data?.error) {
-      return data.error as string
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
-}
+import type { Domain } from "./_components/domains.types"
 
 export default function ProjectDomainsPage() {
   const params = useParams()
-  const {
-    data: project,
-    isLoading,
-    refetch: fetchProject,
-  } = useProject(params.projectName as string)
+  const { data: project, isLoading } = useProject(params.projectName as string)
 
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [newDomain, setNewDomain] = useState("")
@@ -50,10 +34,9 @@ export default function ProjectDomainsPage() {
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null)
   const [editHostname, setEditHostname] = useState("")
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-
   const { mutate: createDomain, isPending: isAddingDomain } = useCreateDomain()
-  const { mutate: updateDomain, isPending: isUpdatingDomain } = useUpdateDomain()
+  const { mutate: updateDomain, isPending: isUpdatingDomain } =
+    useUpdateDomain()
 
   const handleAddDomain = () => {
     const trimmedHostname = newDomain.trim()
@@ -71,7 +54,9 @@ export default function ProjectDomainsPage() {
           setIsAddOpen(false)
         },
         onError: (error) => {
-          toast.error(error.message || "An error occurred while adding the domain")
+          toast.error(
+            error.message || "An error occurred while adding the domain"
+          )
         },
       }
     )
@@ -92,7 +77,11 @@ export default function ProjectDomainsPage() {
     }
 
     updateDomain(
-      { projectName: params.projectName as string, domainId: editingDomain.id, hostname: trimmedHostname },
+      {
+        projectName: params.projectName as string,
+        domainId: editingDomain.id,
+        hostname: trimmedHostname,
+      },
       {
         onSuccess: () => {
           toast.success("Domain updated successfully")
@@ -100,7 +89,9 @@ export default function ProjectDomainsPage() {
           setEditHostname("")
         },
         onError: (error) => {
-          toast.error(error.message || "An error occurred while updating the domain")
+          toast.error(
+            error.message || "An error occurred while updating the domain"
+          )
         },
       }
     )
@@ -116,11 +107,10 @@ export default function ProjectDomainsPage() {
     }
   }
 
-  useEffect(() => {
-    if (editingDomain) {
-      setEditHostname(editingDomain.hostname)
-    }
-  }, [editingDomain])
+  const handleEditDomain = useCallback((domain: Domain | null) => {
+    setEditingDomain(domain)
+    setEditHostname(domain?.hostname ?? "")
+  }, [])
 
   const filteredDomains = useMemo(() => {
     const list = project?.domains ?? []
@@ -173,7 +163,7 @@ export default function ProjectDomainsPage() {
           ) : (
             <DomainsTable
               items={filteredDomains}
-              onEdit={setEditingDomain}
+              onEdit={handleEditDomain}
               onCopy={handleCopyDomain}
             />
           )}

@@ -136,11 +136,15 @@ export default function SignInPage() {
               await authClient.signIn.social(
                 {
                   provider: "github",
-                  callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/projects` || "http://localhost:3000/projects",
+                  callbackURL:
+                    `${process.env.NEXT_PUBLIC_FRONTEND_URL}/projects` ||
+                    "http://localhost:3000/projects",
                 },
                 {
                   onError: (ctx) => {
-                    toast.error(ctx.error.message || "Failed to sign in with GitHub")
+                    toast.error(
+                      ctx.error.message || "Failed to sign in with GitHub"
+                    )
                     setIsLoading(false)
                   },
                 }

@@ -6,16 +6,18 @@ import { cn } from "@/lib/utils"
 import { ChevronDown, ChevronUp, GitBranch, Settings } from "lucide-react"
 import { GitHubIcon } from "./icons"
 
+interface FormDataType {
+  repoUrl: string
+  framework: string
+  buildCommand: string
+  outputDir: string
+}
+
 interface ConfigureStepProps {
   selectedRepo: GitHubRepo | null
-  formData: {
-    repoUrl: string
-    framework: string
-    buildCommand: string
-    outputDir: string
-  }
+  formData: FormDataType
   handleChange: (field: string, value: string) => void
-  setFormData: React.Dispatch<React.SetStateAction<any>>
+  setFormData: React.Dispatch<React.SetStateAction<FormDataType>>
   setStep: (step: 1 | 2) => void
   getDerivedProjectName: (url: string) => string
   showAdvanced: boolean
@@ -74,7 +76,7 @@ export function ConfigureStep({
             type="button"
             onClick={() => {
               handleChange("framework", "VITE")
-              setFormData((prev: any) => ({
+              setFormData((prev: FormDataType) => ({
                 ...prev,
                 buildCommand: "npm run build",
                 outputDir: "dist",
@@ -97,7 +99,7 @@ export function ConfigureStep({
             type="button"
             onClick={() => {
               handleChange("framework", "STATIC")
-              setFormData((prev: any) => ({
+              setFormData((prev: FormDataType) => ({
                 ...prev,
                 buildCommand: "",
                 outputDir: ".",

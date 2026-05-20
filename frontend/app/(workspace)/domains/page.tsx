@@ -22,9 +22,12 @@ export default function DomainsPage() {
   const { data: projects = [], isLoading } = useProjects()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredProjects = projects.filter((project: Project) =>
-    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.domains?.some(d => d.hostname.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredProjects = projects.filter(
+    (project: Project) =>
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.domains?.some((d) =>
+        d.hostname.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   )
 
   return (
@@ -53,7 +56,7 @@ export default function DomainsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed bg-background/50">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/50 py-20 text-center">
           <div className="mb-4 rounded-full bg-primary/10 p-4">
             <FolderGit2 className="h-8 w-8 text-primary" />
           </div>
@@ -66,20 +69,20 @@ export default function DomainsPage() {
           </Button>
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed bg-background/50">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/50 py-20 text-center">
           <p className="text-lg text-muted-foreground">
             No results found for &quot;{searchQuery}&quot;
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border bg-background/60 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-xl border bg-background/60 shadow-sm">
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow>
-                <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[250px]">
+                <TableHead className="w-[250px] px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                   Project
                 </TableHead>
-                <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                   Domains
                 </TableHead>
                 <TableHead className="w-[100px] px-4 py-3 text-xs font-semibold text-muted-foreground" />
@@ -87,35 +90,46 @@ export default function DomainsPage() {
             </TableHeader>
             <TableBody>
               {filteredProjects.map((project) => {
-                const hasDomains = project.domains && project.domains.length > 0;
-                
+                const hasDomains = project.domains && project.domains.length > 0
+
                 return (
-                  <TableRow key={project.id} className="transition-colors hover:bg-muted/10 group">
-                    <TableCell className="px-4 py-4 font-medium align-top">
-                      <Link href={`/projects/${project.name}`} className="hover:text-primary transition-colors hover:underline">
+                  <TableRow
+                    key={project.id}
+                    className="group transition-colors hover:bg-muted/10"
+                  >
+                    <TableCell className="px-4 py-4 align-top font-medium">
+                      <Link
+                        href={`/projects/${project.name}`}
+                        className="transition-colors hover:text-primary hover:underline"
+                      >
                         {project.name}
                       </Link>
                     </TableCell>
                     <TableCell className="px-4 py-4 align-top">
                       {!hasDomains ? (
-                        <span className="text-muted-foreground text-sm italic">
+                        <span className="text-sm text-muted-foreground italic">
                           No domains configured
                         </span>
                       ) : (
                         <div className="flex flex-col gap-3">
                           {project.domains.map((domain) => (
-                            <div key={domain.id} className="flex items-center gap-3">
+                            <div
+                              key={domain.id}
+                              className="flex items-center gap-3"
+                            >
                               <a
                                 href={`https://${getDomain(domain.hostname)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="hover:text-primary transition-colors hover:underline font-medium"
+                                className="font-medium transition-colors hover:text-primary hover:underline"
                               >
                                 {getDomain(domain.hostname)}
                               </a>
                               <Badge
-                                variant={domain.verified ? "default" : "secondary"}
-                                className="rounded-full px-2 py-0 text-[10px] uppercase font-bold"
+                                variant={
+                                  domain.verified ? "default" : "secondary"
+                                }
+                                className="rounded-full px-2 py-0 text-[10px] font-bold uppercase"
                               >
                                 {domain.verified ? "Verified" : "Pending"}
                               </Badge>
@@ -125,7 +139,12 @@ export default function DomainsPage() {
                       )}
                     </TableCell>
                     <TableCell className="px-4 py-4 text-right align-top">
-                      <Button variant="ghost" size="sm" asChild className="gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mt-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="-mt-1.5 gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                      >
                         <Link href={`/projects/${project.name}/domains`}>
                           Manage <ChevronRight className="h-3 w-3" />
                         </Link>
