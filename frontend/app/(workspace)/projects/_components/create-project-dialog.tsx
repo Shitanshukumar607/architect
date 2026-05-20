@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ export function CreateProjectDialog({
   onOpenChange,
   onProjectCreated,
 }: CreateProjectDialogProps) {
+  const router = useRouter()
   const [step, setStep] = useState<1 | 2>(1)
   const [sourceTab, setSourceTab] = useState<"github" | "manual">("github")
   const [error, setError] = useState<string | null>(null)
@@ -105,7 +107,9 @@ export function CreateProjectDialog({
         }
       )
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      )
     }
   }
 
@@ -141,9 +145,16 @@ export function CreateProjectDialog({
     }
 
     createProject(formData, {
-      onSuccess: () => {
+      onSuccess: (createdProject) => {
+        const targetName =
+          createdProject?.name || getDerivedProjectName(formData.repoUrl)
+
         onProjectCreated()
         handleOpenChange(false)
+
+        if (targetName) {
+          router.push(`/projects/${targetName}`)
+        }
       },
       onError: (err) => {
         setError(err.message || "An error occurred")

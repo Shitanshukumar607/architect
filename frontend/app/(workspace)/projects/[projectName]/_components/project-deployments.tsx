@@ -6,16 +6,14 @@ import { formatDistanceToNow } from "date-fns"
 import {
   GitBranch,
   Loader2,
-  PlayCircle,
   RefreshCw,
   CheckCircle2,
   XCircle,
   Clock,
-  MoreHorizontal,
-  ExternalLink,
   Rocket,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Table,
   TableBody,
@@ -24,12 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { useDeployProject } from "@/lib/queries"
 
@@ -42,6 +34,7 @@ export function ProjectDeployments({
   project: Project
   onRefresh: () => void
 }) {
+  const router = useRouter()
   const { mutate: deploy, isPending: isDeploying } = useDeployProject()
 
   const handleRedeploy = () => {
@@ -169,7 +162,6 @@ export function ProjectDeployments({
               <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Created
               </TableHead>
-              <TableHead className="w-[56px] px-4 py-3 text-xs font-semibold text-muted-foreground" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -178,17 +170,30 @@ export function ProjectDeployments({
               const createdLabel = formatDistanceToNow(new Date(createdAt), {
                 addSuffix: true,
               })
+              const deploymentHref = `/projects/${project.name || "project"}/deployments/${deployment.id}`
 
               return (
                 <TableRow
                   key={deployment.id}
-                  className="group transition-colors hover:bg-muted/10"
+                  className="group cursor-pointer transition-colors hover:bg-muted/10"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(deploymentHref)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault()
+                      router.push(deploymentHref)
+                    }
+                  }}
                 >
                   <TableCell className="px-4 py-3">
                     <div className="flex flex-col gap-1">
-                      <span className="font-mono text-sm font-semibold">
+                      <Link
+                        href={deploymentHref}
+                        className="font-mono text-sm font-semibold hover:underline"
+                      >
                         {deployment.id.substring(0, 8)}
-                      </span>
+                      </Link>
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3">
@@ -223,35 +228,6 @@ export function ProjectDeployments({
                         </span>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/projects/${project.name || "project"}/deployments/${deployment.id}`}
-                            className="cursor-pointer gap-2"
-                          >
-                            <PlayCircle className="h-4 w-4" />
-                            View Logs
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/projects/${project.name || "project"}`}
-                            className="cursor-pointer gap-2"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            View Project
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               )

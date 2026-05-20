@@ -174,7 +174,12 @@ export default function ProjectDetailsPage({
                   className="group hover:bg-muted/20"
                 >
                   <TableCell className="py-3 font-mono text-xs font-semibold">
-                    {deployment.id.substring(0, 8)}
+                    <Link
+                      href={`/projects/${project.name}/deployments/${deployment.id}`}
+                      className="hover:underline"
+                    >
+                      {deployment.id.substring(0, 8)}
+                    </Link>
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex items-center gap-2 text-xs font-bold tracking-tight uppercase">

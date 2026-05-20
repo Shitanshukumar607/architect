@@ -151,9 +151,12 @@ function ProjectDeploymentRow({
             {getStatusBadge(latestDeployment.status)}
             <div className="flex flex-col">
               <span className="text-sm font-medium">{createdLabel}</span>
-              <span className="font-mono text-xs text-muted-foreground">
+              <Link
+                href={`/projects/${initialProject.name}/deployments/${latestDeployment.id}`}
+                className="font-mono text-xs text-muted-foreground hover:underline"
+              >
                 {latestDeployment.id.substring(0, 8)}
-              </span>
+              </Link>
             </div>
           </div>
         )}
