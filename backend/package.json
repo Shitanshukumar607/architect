@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "start": "tsx server.ts",
+    "start": "npx prisma db push && tsx server.ts",
     "dev": "tsx watch server.ts",
     "build": "tsc -p tsconfig.json",
     "start:prod": "node dist/server.js",
