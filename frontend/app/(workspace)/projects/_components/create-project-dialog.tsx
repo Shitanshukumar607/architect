@@ -29,11 +29,11 @@ export function CreateProjectDialog({
   const [step, setStep] = useState<1 | 2>(1)
   const [sourceTab, setSourceTab] = useState<"github" | "manual">("github")
   const [error, setError] = useState<string | null>(null)
-  
+
   // Step 1 state
   const [searchQuery, setSearchQuery] = useState("")
   const [manualUrlInput, setManualUrlInput] = useState("")
-  
+
   // Step 2 state
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -104,14 +104,36 @@ export function CreateProjectDialog({
           },
         }
       )
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (step === 1) {
+      if (sourceTab === "manual") {
+        if (!manualUrlInput) {
+          setError("Please enter a repository URL")
+          return
+        }
+        if (
+          !manualUrlInput.startsWith("http://") &&
+          !manualUrlInput.startsWith("https://") &&
+          !manualUrlInput.startsWith("git@")
+        ) {
+          setError(
+            "Please enter a valid Git URL (e.g. https://github.com/user/repo)"
+          )
+          return
+        }
+        setError(null)
+        handleManualContinue(manualUrlInput)
+      }
+      return
+    }
 
     if (!formData.repoUrl) {
       setError("Please select a repository or enter a URL")
@@ -135,17 +157,22 @@ export function CreateProjectDialog({
     return repoName.toLowerCase().replace(/[^a-z0-9]/g, "-")
   }
 
-  const filteredRepos = repos?.filter((repo) =>
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    repo.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-  ) ?? []
+  const filteredRepos =
+    repos?.filter(
+      (repo) =>
+        repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        repo.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+    ) ?? []
 
   const hasGitHubRepos = repos && repos.length > 0
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[560px] max-h-[85vh] flex flex-col overflow-hidden p-0">
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 mb-3">
+      <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden p-0 sm:max-w-[560px]">
+        <form
+          onSubmit={handleSubmit}
+          className="mb-3 flex min-h-0 flex-1 flex-col"
+        >
           <div className="p-6 pb-4">
             <DialogHeader>
               <DialogTitle>
@@ -159,7 +186,7 @@ export function CreateProjectDialog({
             </DialogHeader>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-6">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6">
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                 {error}
@@ -199,6 +226,7 @@ export function CreateProjectDialog({
             {step === 1 ? (
               <>
                 <Button
+                  key="cancel-btn"
                   type="button"
                   variant="ghost"
                   onClick={() => handleOpenChange(false)}
@@ -206,18 +234,28 @@ export function CreateProjectDialog({
                   Cancel
                 </Button>
                 {sourceTab === "manual" && (
-                  <Button type="button" onClick={() => {
-                    if (!manualUrlInput) {
-                      setError("Please enter a repository URL")
-                      return
-                    }
-                    if (!manualUrlInput.startsWith("http://") && !manualUrlInput.startsWith("https://") && !manualUrlInput.startsWith("git@")) {
-                      setError("Please enter a valid Git URL (e.g. https://github.com/user/repo)")
-                      return
-                    }
-                    setError(null)
-                    handleManualContinue(manualUrlInput)
-                  }}>
+                  <Button
+                    key="continue-btn"
+                    type="button"
+                    onClick={() => {
+                      if (!manualUrlInput) {
+                        setError("Please enter a repository URL")
+                        return
+                      }
+                      if (
+                        !manualUrlInput.startsWith("http://") &&
+                        !manualUrlInput.startsWith("https://") &&
+                        !manualUrlInput.startsWith("git@")
+                      ) {
+                        setError(
+                          "Please enter a valid Git URL (e.g. https://github.com/user/repo)"
+                        )
+                        return
+                      }
+                      setError(null)
+                      handleManualContinue(manualUrlInput)
+                    }}
+                  >
                     Continue
                   </Button>
                 )}
@@ -225,14 +263,17 @@ export function CreateProjectDialog({
             ) : (
               <>
                 <Button
+                  key="back-btn"
                   type="button"
                   variant="ghost"
                   onClick={() => setStep(1)}
                 >
                   Back
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button key="deploy-btn" type="submit" disabled={isLoading}>
+                  {isLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Deploy Project
                 </Button>
               </>
