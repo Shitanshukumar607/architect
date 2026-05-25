@@ -8,5 +8,6 @@ export function cn(...inputs: ClassValue[]) {
 export function getDomain(hostname: string) {
   if (!hostname) return ""
   if (hostname.includes(".")) return hostname
-  return `${hostname}.architect.shitanshu.me`
+  const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "architect.shitanshu.me"
+  return `${hostname}.${platformDomain}`
 }

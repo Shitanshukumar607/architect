@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { GitHubRepo } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, getDomain } from "@/lib/utils"
 import { ChevronDown, ChevronUp, GitBranch, Settings } from "lucide-react"
 import { GitHubIcon } from "./icons"
 
@@ -64,8 +64,7 @@ export function ConfigureStep({
       <div className="space-y-2 text-sm text-muted-foreground">
         Your project will be hosted at{" "}
         <strong className="font-medium text-foreground">
-          {getDerivedProjectName(formData.repoUrl) || "project"}
-          .architect.shitanshu.me
+          {getDomain(getDerivedProjectName(formData.repoUrl) || "project")}
         </strong>{" "}
         if it&apos;s available. Don&apos;t worry, you can change it later.
       </div>
