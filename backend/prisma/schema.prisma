@@ -37,6 +37,8 @@ model Deployment {
   startedAt    DateTime?
   finishedAt   DateTime?
   errorMessage String?
+  commitSha    String?
+  commitMessage String?
 
   userId       String
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)

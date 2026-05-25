@@ -27,6 +27,8 @@ export type CreateDeploymentInput = {
   repoUrl: string;
   buildCommand: string | null;
   outputDir: string;
+  commitSha?: string | null;
+  commitMessage?: string | null;
 };
 
 export async function createDeployment(input: CreateDeploymentInput) {
@@ -65,6 +67,8 @@ export async function createDeployment(input: CreateDeploymentInput) {
       buildCommand: input.buildCommand,
       outputDir: input.outputDir,
       status: DeploymentStatus.QUEUED,
+      commitSha: input.commitSha,
+      commitMessage: input.commitMessage,
     },
   });
 }
@@ -76,6 +80,8 @@ export type CreateDeploymentForProjectInput = {
   repoUrl: string;
   buildCommand: string | null;
   outputDir: string;
+  commitSha?: string | null;
+  commitMessage?: string | null;
 };
 
 export async function createDeploymentForProject(
@@ -90,6 +96,22 @@ export async function createDeploymentForProject(
       buildCommand: input.buildCommand,
       outputDir: input.outputDir,
       status: DeploymentStatus.QUEUED,
+      commitSha: input.commitSha,
+      commitMessage: input.commitMessage,
+    },
+  });
+}
+
+export async function cancelOldQueuedDeployments(projectId: string) {
+  return await prisma.deployment.updateMany({
+    where: {
+      projectId,
+      status: DeploymentStatus.QUEUED,
+    },
+    data: {
+      status: DeploymentStatus.CANCELED,
+      errorMessage: "Canceled because a newer deployment was queued.",
+      finishedAt: new Date(),
     },
   });
 }

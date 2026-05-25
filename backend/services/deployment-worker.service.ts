@@ -100,6 +100,19 @@ async function processDeploymentJob(job: Deployment) {
       if (cloneOut) await logAndPrint(job.id, "info", cloneOut);
       if (cloneErr) await logAndPrint(job.id, "info", cloneErr);
 
+      if (job.commitSha) {
+        await logAndPrint(
+          job.id,
+          "info",
+          `Checking out specific commit: ${job.commitSha}`,
+        );
+        const { stdout: checkoutOut, stderr: checkoutErr } = await execPromise(
+          `docker exec -w /repo ${containerName} git checkout ${job.commitSha}`,
+        );
+        if (checkoutOut) await logAndPrint(job.id, "info", checkoutOut);
+        if (checkoutErr) await logAndPrint(job.id, "info", checkoutErr);
+      }
+
       if (job.buildCommand) {
         await logAndPrint(
           job.id,

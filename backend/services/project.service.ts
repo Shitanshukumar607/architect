@@ -18,6 +18,7 @@ import {
 import { createDeploymentForProject } from "../models/deploymentModel";
 import { generateId } from "../utils/generateId";
 import { ServiceError } from "./service-error";
+import { prisma } from "../lib/prisma";
 
 type CreateProjectPayload = {
   repoUrl: unknown;
@@ -32,6 +33,95 @@ function getRepoName(repoUrl: string): string {
 
 function normalizeProjectName(repoName: string): string {
   return repoName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+}
+
+function parseGitHubUrl(repoUrl: string): { owner: string; repo: string } | null {
+  const trimmed = repoUrl.trim();
+  try {
+    const url = new URL(trimmed);
+    if (url.hostname.includes("github.com")) {
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (parts.length >= 2) {
+        return {
+          owner: parts[0],
+          repo: parts[1].replace(/\.git$/i, ""),
+        };
+      }
+    }
+  } catch {
+    const match = trimmed.match(/github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?$/i);
+    if (match?.[1] && match?.[2]) {
+      return {
+        owner: match[1],
+        repo: match[2],
+      };
+    }
+  }
+  return null;
+}
+
+async function setupGitHubWebhook(userId: string, repoUrl: string) {
+  const parsed = parseGitHubUrl(repoUrl);
+  if (!parsed) {
+    console.warn(`[Webhook Setup] Could not parse repository details from: ${repoUrl}`);
+    return;
+  }
+
+  const { owner, repo } = parsed;
+
+  try {
+    const account = await prisma.account.findFirst({
+      where: {
+        userId,
+        providerId: "github",
+      },
+    });
+
+    if (!account || !account.accessToken) {
+      console.warn(`[Webhook Setup] No linked GitHub OAuth account or access token found for user: ${userId}`);
+      return;
+    }
+
+    const webhookUrl = process.env.API_URL 
+      ? `${process.env.API_URL}/api/github/webhook`
+      : `${process.env.BETTER_AUTH_URL}/api/github/webhook`;
+
+    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || "";
+
+    console.log(`[Webhook Setup] Registering webhook on GitHub for ${owner}/${repo} pointing to ${webhookUrl}...`);
+
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/hooks`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${account.accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+        "User-Agent": "Architect-App",
+      },
+      body: JSON.stringify({
+        name: "web",
+        active: true,
+        events: ["push"],
+        config: {
+          url: webhookUrl,
+          content_type: "json",
+          secret: webhookSecret,
+        },
+      }),
+    });
+
+    if (response.ok) {
+      console.log(`[Webhook Setup] Webhook registered successfully for ${owner}/${repo}`);
+    } else {
+      const errorBody = await response.text();
+      console.warn(
+        `[Webhook Setup] Failed to register webhook on GitHub (${response.status}):`,
+        errorBody,
+      );
+    }
+  } catch (error) {
+    console.error(`[Webhook Setup] Error creating GitHub webhook for ${owner}/${repo}:`, error);
+  }
 }
 
 export async function createProjectForUser(
@@ -72,6 +162,11 @@ export async function createProjectForUser(
       repoUrl: project.repoUrl,
       buildCommand: project.buildCommand,
       outputDir: project.outputDir,
+    });
+
+    // Programmatically set up the GitHub repository webhook using the user's OAuth credentials
+    setupGitHubWebhook(userId, project.repoUrl).catch((err) => {
+      console.error("[Webhook Setup] Background webhook creation error:", err);
     });
 
     return project;
