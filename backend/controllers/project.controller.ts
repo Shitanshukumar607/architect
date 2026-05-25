@@ -12,6 +12,7 @@ import {
   updateProjectDomain,
   updateProjectEnvVar,
   deleteProject,
+  getProjectEnvVarValue,
 } from "../services/project.service";
 import { ServiceError } from "../services/service-error";
 
@@ -42,11 +43,27 @@ export async function getProjectsController(req: Request, res: Response) {
   }
 }
 
+function maskEnvVars(envVars?: any[]) {
+  if (!envVars) return envVars;
+  return envVars.map((envVar) => ({
+    ...envVar,
+    value: "••••••••",
+  }));
+}
+
 export async function getProjectByIdController(req: Request, res: Response) {
   try {
     const session = (req as any).session;
     const { id } = req.params as { id?: string };
     const project = await getProjectById(session.user.id, id);
+
+    if (project) {
+      const formattedProject = {
+        ...project,
+        envVars: maskEnvVars((project as any).envVars),
+      };
+      return res.status(200).json(formattedProject);
+    }
 
     return res.status(200).json(project);
   } catch (error) {
@@ -63,6 +80,14 @@ export async function getProjectByNameController(req: Request, res: Response) {
     const session = (req as any).session;
     const { name } = req.params as { name?: string };
     const project = await getProjectByName(session.user.id, name);
+
+    if (project) {
+      const formattedProject = {
+        ...project,
+        envVars: maskEnvVars((project as any).envVars),
+      };
+      return res.status(200).json(formattedProject);
+    }
 
     return res.status(200).json(project);
   } catch (error) {
@@ -158,8 +183,9 @@ export async function addProjectEnvVarController(req: Request, res: Response) {
     const { key, value } = req.body as { key: string; value: string };
 
     const envVar = await addProjectEnvVar(session.user.id, name, key, value);
+    const maskedEnvVar = envVar ? { ...envVar, value: "••••••••" } : envVar;
 
-    return res.status(201).json(envVar);
+    return res.status(201).json(maskedEnvVar);
   } catch (error) {
     if (error instanceof ServiceError) {
       return res.status(error.status).json({ error: error.message });
@@ -175,8 +201,9 @@ export async function getProjectEnvVarsController(req: Request, res: Response) {
     const { name } = req.params as { name: string };
 
     const envVars = await listProjectEnvVars(session.user.id, name);
+    const maskedEnvVars = maskEnvVars(envVars);
 
-    return res.status(200).json(envVars);
+    return res.status(200).json(maskedEnvVars);
   } catch (error) {
     if (error instanceof ServiceError) {
       return res.status(error.status).json({ error: error.message });
@@ -202,8 +229,9 @@ export async function updateProjectEnvVarController(
       key,
       value,
     });
+    const maskedEnvVar = envVar ? { ...envVar, value: "••••••••" } : envVar;
 
-    return res.status(200).json(envVar);
+    return res.status(200).json(maskedEnvVar);
   } catch (error) {
     if (error instanceof ServiceError) {
       return res.status(error.status).json({ error: error.message });
@@ -235,3 +263,27 @@ export async function deleteProjectEnvVarController(
     return res.status(500).json({ error: "Failed to delete env var" });
   }
 }
+
+export async function revealProjectEnvVarController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const session = (req as any).session;
+    const { name, envVarId } = req.params as {
+      name: string;
+      envVarId: string;
+    };
+
+    const envVar = await getProjectEnvVarValue(session.user.id, name, envVarId);
+
+    return res.status(200).json(envVar);
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Reveal env var error:", error);
+    return res.status(500).json({ error: "Failed to reveal env var" });
+  }
+}
+

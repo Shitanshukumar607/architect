@@ -86,6 +86,15 @@ export const fetchProjectEnvVars = async (projectName: string): Promise<EnvVar[]
   return response.json()
 }
 
+export const revealProjectEnvVar = async (projectName: string, varId: string): Promise<EnvVar> => {
+  const response = await fetch(
+    `${getBaseUrl()}/api/projects/name/${projectName}/env-vars/${varId}/reveal`,
+    { credentials: "include" }
+  )
+  if (!response.ok) throw new Error("Failed to reveal env var")
+  return response.json()
+}
+
 export const fetchDeploymentLogs = async (deploymentId: string): Promise<Deployment & { logs: DeploymentLog[] }> => {
   const response = await fetch(`${getBaseUrl()}/api/deploy/${deploymentId}`, { credentials: "include" })
   if (!response.ok) throw new Error("Failed to fetch deployment logs")

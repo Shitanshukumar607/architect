@@ -39,6 +39,24 @@ async function processDeploymentJob(job: Deployment) {
   }
   fs.mkdirSync(tmpDir, { recursive: true });
 
+  // get env vars
+  let envVars: { key: string; value: string }[] = [];
+  if (job.projectId) {
+    envVars = await prisma.projectEnvVar.findMany({
+      where: {
+        projectId: job.projectId,
+      },
+    });
+  }
+
+  const envContent = envVars
+    .map((env) => `${env.key}=${env.value}`)
+    .join("\n");
+
+  // create env
+  const envPath = path.join("/tmp", `${job.id}.env`);
+  fs.writeFileSync(envPath, envContent);
+
   try {
     try {
       await execPromise("docker --version");
@@ -53,8 +71,10 @@ async function processDeploymentJob(job: Deployment) {
 
     const outputDir = job.outputDir || "dist";
     await logAndPrint(job.id, "info", `Starting container ${containerName}`);
+    await logAndPrint(job.id, "info", "Environment variables loaded"); 
+
     await execPromise(
-      `docker run -d --name ${containerName} node:20 tail -f /dev/null`,
+      `docker run -d --name ${containerName} --env-file ${envPath} node:20 tail -f /dev/null`,
     );
 
     try {
@@ -141,6 +161,14 @@ async function processDeploymentJob(job: Deployment) {
       finishedAt: new Date(),
       errorMessage: message,
     });
+  } finally {
+    if (fs.existsSync(envPath)) {
+      try {
+        fs.unlinkSync(envPath);
+      } catch (err) {
+        console.error(`Failed to delete temporary env file at ${envPath}:`, err);
+      }
+    }
   }
 }
 

@@ -323,6 +323,11 @@ export async function addProjectEnvVar(
     throw new ServiceError("value is required", 400);
   }
 
+  const keyPattern = /^[A-Z0-9_]+$/;
+  if (!keyPattern.test(key)) {
+    throw new ServiceError("Invalid environment variable key pattern. Only uppercase letters, numbers, and underscores are allowed.", 400);
+  }
+
   const project = await getProjectByName(userId, name);
 
   try {
@@ -370,6 +375,10 @@ export async function updateProjectEnvVar(
     const trimmedKey = key.trim();
     if (trimmedKey.length === 0) {
       throw new ServiceError("key must be a non-empty string", 400);
+    }
+    const keyPattern = /^[A-Z0-9_]+$/;
+    if (!keyPattern.test(trimmedKey)) {
+      throw new ServiceError("Invalid environment variable key pattern. Only uppercase letters, numbers, and underscores are allowed.", 400);
     }
     data.key = trimmedKey;
   }
@@ -424,3 +433,23 @@ export async function deleteProjectEnvVar(
 
   return await deleteProjectEnvVarById(envVar.id);
 }
+
+export async function getProjectEnvVarValue(
+  userId: string,
+  name: string,
+  envVarId: string,
+) {
+  if (!envVarId) {
+    throw new ServiceError("Environment variable not found", 404);
+  }
+
+  const project = await getProjectByName(userId, name);
+  const envVar = await findProjectEnvVarById(project.id, envVarId);
+
+  if (!envVar) {
+    throw new ServiceError("Environment variable not found", 404);
+  }
+
+  return envVar;
+}
+

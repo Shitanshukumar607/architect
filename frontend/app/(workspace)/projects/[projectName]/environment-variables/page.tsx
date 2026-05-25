@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link2, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { useProject, useEnvVars, useCreateEnvVar, useUpdateEnvVar, useDeleteEnvVar } from "@/lib/queries"
+import { revealProjectEnvVar } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -64,6 +65,9 @@ export default function ProjectEnvVarsPage() {
   const [revealedValues, setRevealedValues] = useState<Record<string, boolean>>(
     {}
   )
+  const [decryptedValues, setDecryptedValues] = useState<Record<string, string>>(
+    {}
+  )
 
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isAddLoading, setIsAddLoading] = useState(false)
@@ -75,13 +79,26 @@ export default function ProjectEnvVarsPage() {
   const [editValue, setEditValue] = useState("")
   const [isEditLoading, setIsEditLoading] = useState(false)
 
-  const startEditing = (envVar: EnvVar) => {
+  const startEditing = async (envVar: EnvVar) => {
+    let valueToEdit = decryptedValues[envVar.id]
+    if (!valueToEdit) {
+      try {
+        const fetched = await revealProjectEnvVar(projectName as string, envVar.id)
+        valueToEdit = fetched.value
+        setDecryptedValues((prev) => ({
+          ...prev,
+          [envVar.id]: fetched.value,
+        }))
+      } catch (error) {
+        console.error("Fetch env var for edit error:", error)
+        toast.error("Failed to fetch environment variable value")
+        return
+      }
+    }
     setEditingVar(envVar)
     setEditKey(envVar.key)
-    setEditValue(envVar.value)
+    setEditValue(valueToEdit)
   }
-
-  // Removed useEffect for setting editKey and editValue
 
   const filteredVars = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -143,7 +160,8 @@ export default function ProjectEnvVarsPage() {
       return
     }
 
-    if (trimmedKey === editingVar.key && trimmedValue === editingVar.value) {
+    const originalValue = decryptedValues[editingVar.id] ?? editingVar.value
+    if (trimmedKey === editingVar.key && trimmedValue === originalValue) {
       toast.message("No changes to save")
       return
     }
@@ -156,6 +174,10 @@ export default function ProjectEnvVarsPage() {
         data: { key: trimmedKey, value: trimmedValue }
       })
       toast.success("Variable updated successfully")
+      setDecryptedValues((prev) => ({
+        ...prev,
+        [editingVar.id]: trimmedValue,
+      }))
       setEditingVar(null)
     } catch (error: unknown) {
       console.error("Update env var error:", error)
@@ -188,7 +210,16 @@ export default function ProjectEnvVarsPage() {
 
   const handleCopyValue = async (envVar: EnvVar) => {
     try {
-      await navigator.clipboard.writeText(envVar.value)
+      let valueToCopy = decryptedValues[envVar.id]
+      if (!valueToCopy) {
+        const fetched = await revealProjectEnvVar(projectName as string, envVar.id)
+        valueToCopy = fetched.value
+        setDecryptedValues((prev) => ({
+          ...prev,
+          [envVar.id]: fetched.value,
+        }))
+      }
+      await navigator.clipboard.writeText(valueToCopy)
       toast.success("Value copied to clipboard")
     } catch (error) {
       console.error("Copy env var error:", error)
@@ -196,7 +227,21 @@ export default function ProjectEnvVarsPage() {
     }
   }
 
-  const handleToggleReveal = (id: string) => {
+  const handleToggleReveal = async (id: string) => {
+    const isRevealing = !revealedValues[id]
+    if (isRevealing && !decryptedValues[id]) {
+      try {
+        const fetched = await revealProjectEnvVar(projectName as string, id)
+        setDecryptedValues((prev) => ({
+          ...prev,
+          [id]: fetched.value,
+        }))
+      } catch (error) {
+        console.error("Reveal env var error:", error)
+        toast.error("Failed to reveal value")
+        return
+      }
+    }
     setRevealedValues((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -269,7 +314,10 @@ export default function ProjectEnvVarsPage() {
             <EnvVarsEmptyState onAdd={() => setIsAddOpen(true)} />
           ) : (
             <EnvVarsTable
-              items={filteredVars}
+              items={filteredVars.map((envVar) => ({
+                ...envVar,
+                value: decryptedValues[envVar.id] ?? envVar.value,
+              }))}
               maskedValue={MASKED_VALUE}
               revealedValues={revealedValues}
               onToggleReveal={handleToggleReveal}
