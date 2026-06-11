@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -129,6 +129,7 @@ export function SidebarComponent({
   activeItem: "projects" | "domains" | "environment-variables" | "deployments" | "settings"
 }) {
   const params = useParams()
+  const pathname = usePathname()
   const projectName = params?.projectName as string | undefined
 
   const updatedNavigationItems: SidebarNavItemData[] = navigationItems.map((item) => {
@@ -193,7 +194,11 @@ export function SidebarComponent({
         <Separator className="mx-2 w-auto bg-sidebar-border" />
         <SidebarMenu>
           {footerItems.map((item) => (
-            <SidebarNavItem key={item.label} item={item} />
+            <SidebarNavItem 
+              key={item.label} 
+              item={item} 
+              isActive={pathname === item.href || pathname.startsWith(item.href)} 
+            />
           ))}
         </SidebarMenu>
       </SidebarFooter>
