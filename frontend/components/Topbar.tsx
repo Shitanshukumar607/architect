@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Bell, CircleHelp, Settings } from "lucide-react"
 
 export function TopbarComponent({
@@ -77,17 +78,37 @@ export function TopbarComponent({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon-sm" disabled>
-          <Bell />
-          <span className="sr-only">Notifications</span>
-        </Button>
-        <Button variant="ghost" size="icon-sm" disabled>
-          <CircleHelp />
-          <span className="sr-only">Help</span>
-        </Button>
-        <Button variant="ghost" size="icon-sm" disabled>
-          <Settings />
-          <span className="sr-only">Settings</span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon-sm">
+              <Bell className="h-4 w-4" />
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4" align="end" sideOffset={8}>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm leading-none text-foreground">Notifications</h4>
+                <span className="text-[10px] font-medium bg-muted text-muted-foreground px-1.5 py-0.5 rounded">0 new</span>
+              </div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <div className="rounded-full bg-muted/50 p-2.5 mb-2">
+                  <Bell className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground">All caught up!</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  You don&apos;t have any notifications right now.
+                </p>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Button variant="ghost" size="icon-sm" asChild>
+          <Link href="/support">
+            <CircleHelp />
+            <span className="sr-only">Help</span>
+          </Link>
         </Button>
         <div className="flex items-center gap-2 pl-1">
           <Button
